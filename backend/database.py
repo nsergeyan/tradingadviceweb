@@ -1,4 +1,6 @@
 import os
+
+import pandas as pd
 import requests
 from peewee import *
 from dotenv import load_dotenv
@@ -110,4 +112,52 @@ def update_weekly(symbol: str):
     print(f"{symbol} weekly data updated successfully ✅")
 
 
-update_weekly("IBM")
+def fetch_ohlcv(
+    symbol: str,
+    info_type: str = "Weekly",
+    limit: int = None,
+    start_date: str = None,
+    end_date: str = None
+) -> pd.DataFrame:
+    """
+    Fetch OHLCV data for a given symbol and return as Pandas DataFrame.
+
+    Args:
+        symbol (str): Stock ticker, e.g. "IBM"
+        info_type (str): Time series type, e.g. "Weekly", "Daily", "Monthly"
+        limit (int): Maximum number of rows to fetch (most recent first)
+        start_date (str): Start date (inclusive), format "YYYY-MM-DD"
+        end_date (str): End date (inclusive), format "YYYY-MM-DD"
+
+    Returns:
+        pd.DataFrame: DataFrame with columns ["date","open","high","low","close","volume"]
+    """
+    query = (
+        PriceData
+        .select(
+            PriceData.date,
+            PriceData.open,
+            PriceData.high,
+            PriceData.low,
+            PriceData.close,
+            PriceData.volume
+        )
+        .join(MetaData)
+        .where(MetaData.symbol == symbol, MetaData.info_type == info_type)
+    )
+
+    # apply date filters if provided
+    if start_date:
+        query = query.where(PriceData.date >= start_date)
+    if end_date:
+        query = query.where(PriceData.date <= end_date)
+
+    query = query.order_by(PriceData.date.asc())
+
+    if limit:
+        query = query.limit(limit)
+
+    rows = list(query.dicts())
+    df = pd.DataFrame(rows)
+
+    return df

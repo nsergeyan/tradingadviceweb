@@ -2,3 +2,6 @@ peewee == 3.18.2
 flask == 3.1.2
 python-dotenv == 1.1.1
 requests == 2.32.5
+pandas == 2.3.2
+statsmodels == 0.14.5
+scikit-learn == 1.7.2

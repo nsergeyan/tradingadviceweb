@@ -152,7 +152,7 @@ def fetch_ohlcv(
     if end_date:
         query = query.where(PriceData.date <= end_date)
 
-    query = query.order_by(PriceData.date.asc())
+    query = query.order_by(PriceData.date.desc())
 
     if limit:
         query = query.limit(limit)

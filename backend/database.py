@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database initialization (file will be created in the current folder)
-db = SqliteDatabase('TradingAdvice.db')
+DATABASE_PATH = os.getenv("DATABASE_PATH")
+db = SqliteDatabase(DATABASE_PATH)
 
 # Get API key from environment
 ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY")

@@ -2,13 +2,35 @@ import yfinance as yf
 import requests
 from openai import OpenAI
 import os, time, calendar
+import backend.list_stocks as ls
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse, urlunparse, urlencode, parse_qs, urlsplit, urlunsplit, quote_plus
+from backend.list_stocks import get_50_stocks
+from newspaper import Article
+
+
 
 # Set your OpenAI API key
 #You can put your own api if you have a better one
 api_key = "YOUR_OPENAI_KEY_HERE"
 client = OpenAI(api_key=api_key)
+
+
+# --------------------- Helper for printing top 50 ---------------------
+def print_list_in_columns(items, cols=5, col_width=8):
+    """Pretty-print a list in fixed-width columns."""
+    for i in range(0, len(items), cols):
+        row = items[i:i+cols]
+        print("".join(s.ljust(col_width) for s in row))
+
+# --------------------- Helper for printing content ---------------------
+def _truncate(txt: str, max_len: int = 800) -> str:
+    """Keep first max_len chars, append … if truncated."""
+    if not txt:
+        return ""
+    return txt if len(txt) <= max_len else (txt[:max_len].rstrip() + " …")
+
+
 
 # --------------------- Validation ---------------------
 def is_valid_nasdaq(symbol):
@@ -31,6 +53,18 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
     """
     out, seen_titles, seen_links, used_sources = [], set(), set(), set()
     look_from = datetime.now(timezone.utc) - timedelta(days=lookback_days)
+
+    # --------------------- Helper for getting content from news ---------------------
+    def _fetch_article_content(url: str) -> str:
+        """Download and extract main text from a news article link."""
+        try:
+            article = Article(url)
+            article.download()
+            article.parse()
+            return article.text.strip()
+        except Exception:
+            return ""
+
 
     # --- helpers ---
     def _epoch(dt: datetime) -> int:
@@ -60,11 +94,18 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
             return
         seen_titles.add(norm_title)
         seen_links.add(norm_link)
+
+        content = _fetch_article_content(norm_link) #get content text
+        text_check = f"{title.lower()} {content.lower()}"
+        if symbol.lower() not in text_check and comp_name.lower() not in text_check:
+            return  # skip irrelevant article
+
         out.append({
             "title": title.strip(),
             "publisher": publisher.strip() if publisher else "",
             "link": norm_link,
-            "timestamp": ts
+            "timestamp": ts,
+            "content": content
         })
 
     # --- setup: try to get company name (for better queries) ---
@@ -102,7 +143,7 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
     try:
         import feedparser
         before = len(out)
-        rss_q = quote_plus(f'("{symbol}" OR "{comp_name}")') if len(queries) > 1 else quote_plus(symbol)
+        rss_q = quote_plus(f'("{symbol}" OR "{comp_name}" OR "NASDAQ:{symbol}")') if len(queries) > 1 else quote_plus(f'"{symbol}" OR "NASDAQ:{symbol}"')
         rss_url = (
             f"https://news.google.com/rss/search?q={rss_q}+when:{lookback_days}d"
             f"&hl={lang}&gl={region.split('-')[0] if '-' in region else region}&ceid={region}:{lang.split('-')[0]}"
@@ -297,8 +338,13 @@ def analyze_stock(symbol):
     else:
         recommendation = "Strong Buy"
 
-    # Prepare news for AI
-    news_list = "\n".join([f"{i+1}. {n['title']} ({n['publisher']})" for i, n in enumerate(news_items)])
+    # Prepare news for AI (include short content snippets)
+    news_list = "\n".join([
+        f"{i + 1}. {n['title']} ({n.get('publisher', '')})\n"
+        f"   URL: {n.get('link', '')}\n"
+        f"   Full content:\n{n.get('content', '')}\n"
+        for i, n in enumerate(news_items)
+    ])
 
     # AI prompt
     prompt = f"""
@@ -335,22 +381,59 @@ Instructions:
     for s in sources_used:
         print("-", s)
 
+    print("\nFull article content:\n")
+    for i, n in enumerate(news_items, 1):
+        print(f"[{i}] {n['title']}")
+        print(f"Publisher: {n.get('publisher', '')}")
+        print(f"URL: {n.get('link', '')}\n")
+        print(n.get('content', '')[:5000])  # shows up to 5000 symbols
+        print("\n" + "-" * 120 + "\n")
+
     return response.choices[0].message.content
 
 
 # --------------------- Main ---------------------
 def main():
-    print("Welcome to the NASDAQ AI Stock Analyzer!")
+    # Load weekly Top-50 most traded symbols
+    try:
+        top50_list = get_50_stocks()  # returns list
+        top50 = set(sym.upper().strip() for sym in top50_list if sym)
+        if not top50:
+            print("Warning: Top-50 list is empty. Proceeding without Top-50 validation.\n")
+            top50 = None
+    except Exception as e:
+        print(f"Warning: could not load Top-50 list ({e}). Proceeding without Top-50 validation.\n")
+        top50 = None
+
+    # Show Top-50 first (if available)
+    if top50 is not None:
+        print("Welcome! Here is a top 50 of the best traded companies(for this week):\n")
+        try:
+            # pretty columns if helper is available; otherwise simple join
+            print_list_in_columns(sorted(top50))  # comment this out if you skip the helper
+        except NameError:
+            print(", ".join(sorted(top50)))
+        print("\nType one of the tickers from the list.\n")
+
+    # Input loop with validation: NASDAQ + must be in Top-50 (if loaded)
     while True:
         symbol = input("Enter NASDAQ stock symbol (e.g., AAPL, TSLA): ").upper().strip()
-        if is_valid_nasdaq(symbol):
-            break
-        print("Invalid NASDAQ stock symbol. Try again.")
+
+        if top50 is not None and symbol not in top50:
+            print("This symbol is not in the displayed Top-50. Please choose one from the list above.")
+            continue
+
+        if not is_valid_nasdaq(symbol):
+            print("Invalid NASDAQ stock symbol. Try again.")
+            continue
+
+        break  # valid choice
 
     print("\nFetching analysis...\n")
     analysis = analyze_stock(symbol)
     print(f"Analysis for {symbol}:\n")
     print(analysis)
+
 
 if __name__ == "__main__":
     main()

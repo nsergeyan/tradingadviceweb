@@ -75,23 +75,90 @@ class FVGStrategy(bt.Strategy):
         if order.status in [order.Completed, order.Canceled, order.Rejected]:
             self.order = None
 
-if __name__ == '__main__':
-    cerebro = bt.Cerebro()
-    cerebro.addstrategy(FVGStrategy)
+def run_multi_symbol_fvg(symbols, cash=1000.0, timeframe="Weekly", limit=50):
+    results = []
 
-    df = fetch_ohlcv("BA", "Weekly", limit=200)
-    df["datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
-    df.drop("date", axis=1, inplace=True)
-    df = df.sort_values("datetime").reset_index(drop=True)
-    df.set_index("datetime", inplace=True)
+    for symbol in symbols:
+        try:
+            df = fetch_ohlcv(symbol, timeframe, limit=limit)
+            if df is None or len(df) < 10:
+                print(f"[Skip] {symbol}: insufficient data")
+                continue
 
-    print(df)
-    cerebro.adddata(bt.feeds.PandasData(dataname=df))
-    cerebro.broker.setcash(1000.0)
-    cerebro.broker.setcommission(commission=0.001)
-    print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
+            df["datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+            df.drop("date", axis=1, inplace=True)
+            df = df.sort_values("datetime").reset_index(drop=True)
+            df.set_index("datetime", inplace=True)
 
-    cerebro.run()
+            cerebro = bt.Cerebro()
+            cerebro.addstrategy(FVGStrategy)
+            cerebro.adddata(bt.feeds.PandasData(dataname=df))
+            cerebro.broker.setcash(cash)
+            cerebro.broker.setcommission(commission=0.001)
 
-    print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
-    cerebro.plot(style='candle', volume=True, barup='red', bardown='green')
+            start_val = cerebro.broker.getvalue()
+            cerebro.run()
+            end_val = cerebro.broker.getvalue()
+
+            gain = end_val - start_val
+            gain_rate = (gain / start_val) * 100.0
+
+            results.append({
+                "symbol": symbol,
+                "start": start_val,
+                "end": end_val,
+                "gain_rate": gain_rate,
+                "gain": gain
+            })
+
+            # print(f"[{symbol}] start={start_val:.2f}, end={end_val:.2f}, "
+            #       f"gain={gain:.2f}, gain_rate={gain_rate:.2f}%")
+
+        except Exception as e:
+            print(f"[Error] {symbol}: {e}")
+
+    if not results:
+        print("No results computed.")
+        return None
+
+    df_res = pd.DataFrame(results)
+
+    avg_gain_rate = df_res["gain_rate"].mean()
+    gain_count = (df_res["gain"] > 0).sum()
+    loss_count = (df_res["gain"] <= 0).sum()
+    gain_rate_overall = gain_count / len(df_res)
+    loss_rate_overall = loss_count / len(df_res)
+
+    print("\n====== Summary ======")
+    print(f"Symbols tested: {len(df_res)}")
+    print(f"Average gain rate: {avg_gain_rate:.2f}%")
+    print(f"Gain rate (symbols ended up >0): {gain_rate_overall*100:.1f}%")
+    print(f"Loss rate (symbols ended up ≤0): {loss_rate_overall*100:.1f}%")
+
+    return df_res
+
+if __name__ == "__main__":
+    symbols = ["AAPL", "MSFT", "AMZN", "NVDA", "TSLA", "IBM"]
+    summary = run_multi_symbol_fvg(symbols)
+    print(summary)
+
+# if __name__ == '__main__':
+#     cerebro = bt.Cerebro()
+#     cerebro.addstrategy(FVGStrategy)
+#
+#     df = fetch_ohlcv("AAPL", "Weekly", limit=100)
+#     df["datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+#     df.drop("date", axis=1, inplace=True)
+#     df = df.sort_values("datetime").reset_index(drop=True)
+#     df.set_index("datetime", inplace=True)
+#
+#     print(df)
+#     cerebro.adddata(bt.feeds.PandasData(dataname=df))
+#     cerebro.broker.setcash(1000.0)
+#     cerebro.broker.setcommission(commission=0.001)
+#     print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
+#
+#     cerebro.run()
+#
+#     print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+#     cerebro.plot(style='candle', volume=True, barup='red', bardown='green')

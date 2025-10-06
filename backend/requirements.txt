@@ -1,2 +1,3 @@
 #pip install newspaper3k
 #pip install lxml_html_clean
+#pip install --upgrade openai

@@ -5,6 +5,8 @@ import os, time, calendar
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse, urlunparse, urlencode, parse_qs, urlsplit, urlunsplit, quote_plus
 from newspaper import Article
+from backend.list_stocks import get_50_stocks
+from backend import prompt_ai
 
 # Set your OpenAI API key
 # You can put your own api if you have a better one
@@ -374,6 +376,40 @@ Stocks to analyze:
             print("Gemini API failed too:", str(ge))
             return "Both AI services failed. Please try again later."
 
+def initial_stock_ranking() -> list:
+
+    stocks = get_50_stocks()[:10]
+    prompt = """You are the worlds best trading advisor. You are having a meeting soon, and need to do in initial assessment of 15 stocks that have been of interest.
+    Of those, you need rank them from worst to best (to invest in). You will be given some news on which to bace your assessment.  Return a simple list, with the stock symbols separated by a comma, and nothing else. The list starts with the worst, and ends with the best."""
+
+
+    for stock in stocks:
+        news_items = get_recent_news(stock, 5)["news"]
+        news = "\n".join([f"{i + 1}. {n['title']} ({n['publisher']})" for i, n in enumerate(news_items)])
+
+        print(f"{stock} news loaded")
+        prompt += f"\n {stock}: \n {news}"
+
+    print("sending")
+
+    try:
+        output = prompt_ai.gpt(prompt)
+    except Exception as e:
+        print(f"{e}, trying gemini")
+        try:
+            output = prompt_ai.gemini(prompt)
+        except Exception as e:
+            raise ValueError("Ai is unavalible, please try again later") #I used a random error for now, can make coustom later if needed
+
+
+    return output.split(",")[:5]
+
+
+
+
+
 if __name__ == "__main__":
-    top5 = ["NFLX", "MSFT", "TSLA", "AMZN", "NVDA"]
-    print(aiAnalyzeTopFiveStocks(top5))
+    #top5 = ["AAPL", "MSFT", "TSLA", "AMZN", "NVDA"]
+    #print(aiAnalyzeTopFiveStocks(top5))
+
+    print(initial_stock_ranking())

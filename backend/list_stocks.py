@@ -11,7 +11,7 @@ def get_50_stocks() -> list:
     :return: List of 50 most traded symbols
     """
     print("Fetching stocks")
-    path = os.path.join(os.path.dirname(__file__),'DB for stock update/stocks_volume.csv')
+    path = os.path.join(os.path.dirname(__file__),'DbForStockUpdate/stocks_volume.csv')
     with open(path, 'r') as file:
 
         current_week = datetime.now().isocalendar()[1] #Returns the week number

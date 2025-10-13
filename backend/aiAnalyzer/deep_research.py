@@ -240,13 +240,45 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
     return {"news": results, "sources": sorted(list(used_sources))}
 
 
+def initial_stock_ranking() -> list:
+
+    stocks = get_50_stocks()[:10]
+    prompt = """You are the worlds best trading advisor. You are having a meeting soon, and need to do in initial assessment of 15 stocks that have been of interest.
+    Of those, you need rank them from worst to best (to invest in). You will be given some news on which to bace your assessment.  Return a simple list, with the stock symbols separated by a comma, and nothing else. The list starts with the worst, and ends with the best."""
+
+
+    for stock in stocks:
+        news_items = get_recent_news(stock, 1)["news"]
+        news = "\n".join([f"{i + 1}. {n['title']} ({n['publisher']})" for i, n in enumerate(news_items)])
+
+        print(f"{stock} news loaded")
+        prompt += f"\n {stock}: \n {news}"
+
+    print("sending")
+
+    try:
+        output = prompt_ai.gpt(prompt)
+    except Exception as e:
+        print(f"{e}, trying gemini")
+        try:
+            output = prompt_ai.gemini(prompt)
+        except Exception as e:
+            raise ValueError("Ai is unavalible, please try again later") #I used a random error for now, can make coustom later if needed
+
+
+    return [s.strip() for s in output.split(",")[:5]]
+
+
+
+
 # --------------------- Ai2 ---------------------
-def aiAnalyzeTopFiveStocks(stocks):
+def aiAnalyzeTopFiveStocks():
     """
     Analyze top 5 stocks using recent news (titles + full content) and AI reasoning.
     Input: list of 5 stock symbols
     Output: GPT-generated detailed analysis for all 5 stocks
     """
+    stocks = initial_stock_ranking()
     all_summaries = []
 
     for symbol in stocks:
@@ -370,42 +402,5 @@ Stocks to analyze:
             print("Gemini API failed too:", str(ge))
             return "Both AI services failed. Please try again later."
 
-def initial_stock_ranking() -> list:
-
-    stocks = get_50_stocks()[:10]
-    prompt = """You are the worlds best trading advisor. You are having a meeting soon, and need to do in initial assessment of 15 stocks that have been of interest.
-    Of those, you need rank them from worst to best (to invest in). You will be given some news on which to bace your assessment.  Return a simple list, with the stock symbols separated by a comma, and nothing else. The list starts with the worst, and ends with the best."""
-
-
-    for stock in stocks:
-        news_items = get_recent_news(stock, 5)["news"]
-        news = "\n".join([f"{i + 1}. {n['title']} ({n['publisher']})" for i, n in enumerate(news_items)])
-
-        print(f"{stock} news loaded")
-        prompt += f"\n {stock}: \n {news}"
-
-    print("sending")
-
-    try:
-        output = prompt_ai.gpt(prompt)
-    except Exception as e:
-        print(f"{e}, trying gemini")
-        try:
-            output = prompt_ai.gemini(prompt)
-        except Exception as e:
-            raise ValueError("Ai is unavalible, please try again later") #I used a random error for now, can make coustom later if needed
-
-
-    return output.split(",")[:5]
-
-
-
-
-
 if __name__ == "__main__":
-    top5 = ["AAPL"]
-    print(aiAnalyzeTopFiveStocks(top5))
-    #top5 = ["AAPL", "MSFT", "TSLA", "AMZN", "NVDA"]
-    #print(aiAnalyzeTopFiveStocks(top5))
-
-    print(initial_stock_ranking())
+    print(aiAnalyzeTopFiveStocks())

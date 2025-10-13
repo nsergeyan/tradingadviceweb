@@ -6,9 +6,8 @@ from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse, urlunparse, urlencode, parse_qs, urlsplit, urlunsplit, quote_plus
 from newspaper import Article
 
-
 # Set your OpenAI API key
-#You can put your own api if you have a better one
+# You can put your own api if you have a better one
 api_key = "YOUR_OPENAI_KEY_HERE"
 client = OpenAI(api_key=api_key)
 
@@ -23,37 +22,45 @@ def is_valid_nasdaq(symbol):
 
 def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", region="US"):
     """
-    Returns dict:
-    {
-      "news": [ {title, publisher, link, timestamp}, ... ],
-      "sources": [ "Yahoo Finance", "Google News", "Bing News", "Finnhub", "NewsAPI" ]
-    }
-    Sources: Yahoo Finance, Google News RSS (no API key) + optionally Bing, Finnhub, NewsAPI
+    Faster version: collects metadata first, then resolves URLs + fetches article content in parallel.
+    Returns:
+      {
+        "news": [ {title, publisher, link, timestamp, content, paywalled}, ... ],
+        "sources": [...]
+      }
     """
-    out, seen_titles, seen_links, used_sources = [], set(), set(), set()
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    # -------- tuning knobs --------NEW
+    MAX_PER_SOURCE = max_articles           # per-source cap
+    MAX_WORKERS = 8                         # parallel fetchers
+    FETCH_TIMEOUT = 8                       # seconds per HTTP
+    HEADERS = {"User-Agent": "Mozilla/5.0"}
+
+    # -------- caches (per run) --------NEW
+    RESOLVE_CACHE = {}
+    CONTENT_CACHE = {}
+
+    out, used_sources = [], set()
+    candidates = []  # stage-1 raw items (title, publisher, link, ts)
+    seen_titles, seen_links = set(), set()
     look_from = datetime.now(timezone.utc) - timedelta(days=lookback_days)
 
-    # --------------------- Helper for getting content from news ---------------------
-    def _fetch_article_content(url: str) -> str:
-        """Download and extract main text from a news article link."""
+    PAYWALLED_DOMAINS = {"seekingalpha.com", "mtnewswires.com"}
+
+    def _is_paywalled(url: str) -> bool:
         try:
-            article = Article(url)
-            article.download()
-            article.parse()
-            return article.text.strip()
+            host = urlparse(url).netloc.lower()
+            return any(d in host for d in PAYWALLED_DOMAINS)
         except Exception:
-            return ""
+            return False
 
-
-    # --- helpers ---
     def _epoch(dt: datetime) -> int:
-        """Convert datetime to Unix timestamp (UTC)."""
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         return int(dt.timestamp())
 
     def _strip_tracking(u: str) -> str:
-        """Remove tracking parameters (utm, fbclid, etc.) from a URL."""
         try:
             parts = urlsplit(u)
             q = parse_qs(parts.query)
@@ -63,31 +70,57 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
         except Exception:
             return u
 
-    def _add(title, publisher, link, ts):
-        """Add a news item if not duplicate and has required fields."""
-        if not (title and link and ts):
-            return
-        norm_title = title.strip().lower()
-        norm_link = _strip_tracking(link)
-        if norm_title in seen_titles or norm_link in seen_links:
-            return
-        seen_titles.add(norm_title)
-        seen_links.add(norm_link)
+    def _resolve_url(u: str) -> str:
+        """Follow redirects and unwrap Google News 'rss/articles' links.NEW"""
+        if not u:
+            return u
+        if u in RESOLVE_CACHE:
+            return RESOLVE_CACHE[u]
+        try:
+            p = urlparse(u)
+            if "news.google.com" in p.netloc and "/rss/" in p.path:
+                qs = parse_qs(p.query)
+                if "url" in qs and qs["url"]:
+                    RESOLVE_CACHE[u] = qs["url"][0]
+                    return RESOLVE_CACHE[u]
+            r = requests.get(u, headers=HEADERS, timeout=FETCH_TIMEOUT, allow_redirects=True)
+            RESOLVE_CACHE[u] = r.url
+            return RESOLVE_CACHE[u]
+        except Exception:
+            RESOLVE_CACHE[u] = u
+            return u
 
-        content = _fetch_article_content(norm_link) #get content text
-        text_check = f"{title.lower()} {content.lower()}"
-        if symbol.lower() not in text_check and comp_name.lower() not in text_check:
-            return  # skip irrelevant article
+    def _fetch_article_content(url: str) -> str:
+        """Try newspaper3k, then fallback to trafilatura. Cached per final URL."""
+        if not url:
+            return ""
+        if url in CONTENT_CACHE:
+            return CONTENT_CACHE[url]
+        # newspaper3k
+        try:
+            art = Article(url)
+            art.download()
+            art.parse()
+            txt = (art.text or "").strip()
+            if txt:
+                CONTENT_CACHE[url] = txt
+                return txt
+        except Exception:
+            pass
+        # trafilatura fallback NEW for extracting more data
+        try:
+            import trafilatura
+            downloaded = trafilatura.fetch_url(url, no_ssl=True, timeout=FETCH_TIMEOUT)
+            txt = trafilatura.extract(downloaded, include_comments=False, include_tables=False) if downloaded else ""
+            if txt:
+                CONTENT_CACHE[url] = txt.strip()
+                return CONTENT_CACHE[url]
+        except Exception:
+            pass
+        CONTENT_CACHE[url] = ""
+        return ""
 
-        out.append({
-            "title": title.strip(),
-            "publisher": publisher.strip() if publisher else "",
-            "link": norm_link,
-            "timestamp": ts,
-            "content": content
-        })
-
-    # --- setup: try to get company name (for better queries) ---
+    # --- setup: try to get company name for better queries ---
     try:
         comp_name = ""
         try:
@@ -98,62 +131,112 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
         if comp_name and comp_name.lower() not in {symbol.lower()}:
             queries.append(comp_name)
     except Exception:
-        queries = [symbol]
+        queries, comp_name = [symbol], ""
 
-    # --------- Provider: Yahoo Finance ----------
+    # --------- Provider: Yahoo Finance (stage-1: metadata only) ----------
     try:
-        before = len(out)
+        before = len(candidates)
         for q in queries:
             url = f"https://query1.finance.yahoo.com/v1/finance/search?q={quote_plus(q)}"
-            headers = {"User-Agent": "Mozilla/5.0"}
-            resp = requests.get(url, headers=headers, timeout=5)
+            resp = requests.get(url, headers=HEADERS, timeout=FETCH_TIMEOUT)
             resp.raise_for_status()
             data = resp.json()
-            for item in (data.get("news") or [])[:max_articles]:
+            for item in (data.get("news") or [])[:MAX_PER_SOURCE]:
                 ts = item.get("providerPublishTime")
-                pub_ts = int(ts) if isinstance(ts, (int, float)) and ts > 0 else None
-                _add(item.get("title"), item.get("publisher"), item.get("link"), pub_ts)
-        if len(out) > before:
+                pub_ts = int(ts) if isinstance(ts, (int, float)) and ts and ts > 0 else None
+                title = item.get("title")
+                link = item.get("link")
+                publisher = item.get("publisher")
+                if title and link and pub_ts:
+                    candidates.append((title, publisher, link, pub_ts))
+        if len(candidates) > before:
             used_sources.add("Yahoo Finance")
     except Exception:
         pass
 
-    # --------- Provider: Google News (RSS, no API key) ----------
+    # --------- Provider: Google News (RSS) ----------
     try:
         import feedparser
-        before = len(out)
+        before = len(candidates)
         rss_q = quote_plus(f'("{symbol}" OR "{comp_name}" OR "NASDAQ:{symbol}")') if len(queries) > 1 else quote_plus(f'"{symbol}" OR "NASDAQ:{symbol}"')
         rss_url = (
             f"https://news.google.com/rss/search?q={rss_q}+when:{lookback_days}d"
             f"&hl={lang}&gl={region.split('-')[0] if '-' in region else region}&ceid={region}:{lang.split('-')[0]}"
         )
         feed = feedparser.parse(rss_url)
-        for e in feed.entries[:max_articles * 2]:
+        for e in feed.entries[:MAX_PER_SOURCE * 2]:
             title = getattr(e, "title", None)
             link = getattr(e, "link", None)
-            publisher = ""
             pub_ts = None
             if getattr(e, "published_parsed", None):
                 pub_ts = calendar.timegm(e.published_parsed)
             elif getattr(e, "updated_parsed", None):
                 pub_ts = calendar.timegm(e.updated_parsed)
-            _add(title, publisher, link, pub_ts)
-        if len(out) > before:
+            if title and link and pub_ts:
+                candidates.append((title, "", link, pub_ts))
+        if len(candidates) > before:
             used_sources.add("Google News")
     except Exception:
         pass
 
-    # --------- Post-processing: filter, sort, slice ----------
-    if out:
-        min_ts = _epoch(look_from)
-        out = [x for x in out if (x["timestamp"] or 0) >= min_ts]
-        for x in out:
-            if not x["timestamp"]:
-                x["timestamp"] = min_ts
-        out.sort(key=lambda x: x["timestamp"], reverse=True)
-        out = out[:max_articles]
+    # --------- Stage-2: dedupe + filter by lookback ----------NEW
+    min_ts = _epoch(look_from)
+    filtered = []
+    for title, publisher, link, ts in candidates:
+        if ts and ts >= min_ts:
+            norm_title = title.strip().lower()
+            norm_link = _strip_tracking(link)
+            if norm_title in seen_titles or norm_link in seen_links:
+                continue
+            seen_titles.add(norm_title)
+            seen_links.add(norm_link)
+            filtered.append((title, publisher, norm_link, ts))
 
-    return {"news": out, "sources": sorted(list(used_sources))}
+    # --------- Stage-3: resolve + fetch content in parallel ----------NEW
+    def _process_item(item):
+        title, publisher, link, ts = item
+        # resolve redirects
+        final_link = _resolve_url(link)
+        # optional early skip for paywalls (ускоряет, если не нужен paywalled контент)
+        # if _is_paywalled(final_link):
+        #     return None
+        # fetch content
+        content = _fetch_article_content(final_link)
+        # relevance check (symbol or company name must appear in title/content)
+        text_check = f"{title.lower()} {content.lower()}"
+        if symbol.lower() not in text_check and (comp_name and comp_name.lower() not in text_check):
+            return None
+        return {
+            "title": title.strip(),
+            "publisher": (publisher or "").strip(),
+            "link": final_link,
+            "timestamp": ts,
+            "content": content,
+            "paywalled": _is_paywalled(final_link),
+        }
+
+    results = []
+    if filtered:
+        # keep a little headroom so we don't overfetch way more than needed
+        filtered = filtered[: max_articles * 4]
+
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
+            futures = [ex.submit(_process_item, it) for it in filtered]
+            for fut in as_completed(futures):
+                try:
+                    res = fut.result()
+                    if res:
+                        results.append(res)
+                except Exception:
+                    pass
+
+    # --------- Stage-4: sort + final slice ----------NEW
+    if results:
+        results.sort(key=lambda x: x["timestamp"], reverse=True)
+        results = results[:max_articles]
+
+    return {"news": results, "sources": sorted(list(used_sources))}
+
 
 # --------------------- Ai2 ---------------------
 def aiAnalyzeTopFiveStocks(stocks):
@@ -179,12 +262,18 @@ def aiAnalyzeTopFiveStocks(stocks):
             for i, n in enumerate(news_items)
         ])
 
+        # NEW Console output with reason for empty content
         print("\nFull article content:\n")
         for i, n in enumerate(news_items, 1):
             print(f"[{i}] {n['title']}")
             print(f"Publisher: {n.get('publisher', '')}")
-            print(f"URL: {n.get('link', '')}\n")
-            print(n.get('content', '')[:5000])  # shows up to 5000 symbols
+            print(f"URL: {n.get('link', '')}")
+            if not n.get("content"):
+                note = " (paywalled)" if n.get("paywalled") else " (no content extracted)"
+                print(f"[!] Empty content{note}\n")
+            else:
+                print()
+                print(n.get('content', '')[:5000])  # shows up to 5000 symbols
             print("\n" + "-" * 120 + "\n")
 
         # Build per-stock summary for GPT
@@ -286,5 +375,5 @@ Stocks to analyze:
             return "Both AI services failed. Please try again later."
 
 if __name__ == "__main__":
-    top5 = ["AAPL", "MSFT", "TSLA", "AMZN", "NVDA"]
+    top5 = ["NFLX", "MSFT", "TSLA", "AMZN", "NVDA"]
     print(aiAnalyzeTopFiveStocks(top5))

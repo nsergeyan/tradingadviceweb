@@ -12,7 +12,7 @@ def get_50_stocks() -> list:
     :return: List of 50 most traded symbols
     """
 
-    with open('../DB for stock update/stocks_volume.csv', 'r') as file:
+    with open('DbForStockUpdate/stocks_volume.csv', 'r') as file:
 
         current_week = datetime.now().isocalendar()[1] #Returns the week number
 
@@ -38,7 +38,7 @@ def update_stock_volume() -> None:
     print("Updating stock csv")
 
     #Reads the 500 stocks in the S&P 500
-    with open('DB for stock update/stocks.csv', 'r') as file:
+    with open('DbForStockUpdate/stocks_volume.csv', 'r') as file:
         reader = csv.reader(file)
         next(reader)
 
@@ -46,7 +46,7 @@ def update_stock_volume() -> None:
 
 
     #Writes to the CSV the stock symbol and the trade volume of the last week
-    with open("DB for stock update/stocks_volume.csv", "w", newline="") as f:
+    with open("DbForStockUpdate/stocks_volume.csv", "w", newline="") as f:
 
         writer = csv.writer(f)
         writer.writerow([datetime.now().isocalendar()[1]])

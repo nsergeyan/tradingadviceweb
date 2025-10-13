@@ -184,7 +184,7 @@ def aiAnalyzeTopFiveStocks(stocks):
             print(f"[{i}] {n['title']}")
             print(f"Publisher: {n.get('publisher', '')}")
             print(f"URL: {n.get('link', '')}\n")
-            print(n.get('content', '')[:5000])  # shows up to 5000 symbols
+            print(n.get('content', '')[:1000])  # shows up to 5000 symbols
             print("\n" + "-" * 120 + "\n")
 
         # Build per-stock summary for GPT
@@ -223,15 +223,7 @@ That means all 5 stocks are already considered good investments — so your reco
 
 3. **Risks**
    - List potential problems or uncertainties mentioned in the news.
-
-4. **AI Recommendation**
-   - Always give **Buy** or **Strong Buy**.
-   - Explain why the news supports this recommendation.
-
-5. **Outlook**
-   - **Short-term:** How the stock might react in the near future based on news.
-   - **Long-term:** Growth potential and risks if these trends continue.
-
+   
 ### Tone and Style:
 - Use bullet points and short sections.
 - Be clear, simple, and structured.
@@ -286,5 +278,5 @@ Stocks to analyze:
             return "Both AI services failed. Please try again later."
 
 if __name__ == "__main__":
-    top5 = ["AAPL", "MSFT", "TSLA", "AMZN", "NVDA"]
+    top5 = ["AAPL"]
     print(aiAnalyzeTopFiveStocks(top5))

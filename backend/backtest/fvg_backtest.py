@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 import backtrader as bt
 import pandas as pd
 
-from backend.database import fetch_ohlcv, update_weekly
+from backend.database import fetch_ohlcv, update_weekly, update_daily
 
 
 class FVGStrategy(bt.Strategy):
@@ -137,28 +137,29 @@ def run_multi_symbol_fvg(symbols, cash=1000.0, timeframe="Weekly", limit=50):
 
     return df_res
 
-if __name__ == "__main__":
-    symbols = ["AAPL", "MSFT", "AMZN", "NVDA", "TSLA", "IBM"]
-    summary = run_multi_symbol_fvg(symbols)
-    print(summary)
+# if __name__ == "__main__":
+#     symbols = ["AAPL", "MSFT", "AMZN", "NVDA", "TSLA", "IBM"]
+#     summary = run_multi_symbol_fvg(symbols)
+#     print(summary)
 
-# if __name__ == '__main__':
-#     cerebro = bt.Cerebro()
-#     cerebro.addstrategy(FVGStrategy)
-#
-#     df = fetch_ohlcv("AAPL", "Weekly", limit=100)
-#     df["datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
-#     df.drop("date", axis=1, inplace=True)
-#     df = df.sort_values("datetime").reset_index(drop=True)
-#     df.set_index("datetime", inplace=True)
-#
-#     print(df)
-#     cerebro.adddata(bt.feeds.PandasData(dataname=df))
-#     cerebro.broker.setcash(1000.0)
-#     cerebro.broker.setcommission(commission=0.001)
-#     print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
-#
-#     cerebro.run()
-#
-#     print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
-#     cerebro.plot(style='candle', volume=True, barup='red', bardown='green')
+if __name__ == '__main__':
+    cerebro = bt.Cerebro()
+    cerebro.addstrategy(FVGStrategy)
+
+    update_weekly("AAPL")
+    df = fetch_ohlcv("AAPL", "Weekly", limit=100)
+    df["datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+    df.drop("date", axis=1, inplace=True)
+    df = df.sort_values("datetime").reset_index(drop=True)
+    df.set_index("datetime", inplace=True)
+
+    print(df)
+    cerebro.adddata(bt.feeds.PandasData(dataname=df))
+    cerebro.broker.setcash(1000.0)
+    cerebro.broker.setcommission(commission=0.001)
+    print('Starting Portfolio Value: %.2f' % cerebro.broker.getvalue())
+
+    cerebro.run()
+
+    print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+    cerebro.plot(style='candle', volume=True, barup='red', bardown='green')

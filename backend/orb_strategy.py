@@ -76,7 +76,7 @@ def orb_strategy(df: pd.DataFrame):
             if breakout_up is True: # And breakout above the or_range.
                 estimated_price = last_close + ((last_close - or_high) / 3)
                 risk_level = 2
-                estimated_gains = 0 #
+                estimated_gains = ((estimated_price - last_close) / last_close) * 100
             else: # And no breakout.
                 return signals[-1]
 
@@ -114,15 +114,15 @@ def orb_strategy(df: pd.DataFrame):
             if (last_increasing is True) and (last_above_range is True):
                 estimated_price = last_close + last_change
                 risk_level = 2
-                estimated_gains = 0 #
+                estimated_gains = ((estimated_price - last_close) / last_close) * 100
             elif ((last_decreasing is True) or (last_neutral is True)) and (last_above_range is True):
                 estimated_price = last_close + (last_change * 0.2)
                 risk_level = 1
-                estimated_gains = 0 #
+                estimated_gains = ((estimated_price - last_close) / last_close) * 100
             elif (last_increasing is True) and (last_below_range is True):
                 estimated_price = last_close + (last_change * 0.5)
                 risk_level = 1
-                estimated_gains = 0 #
+                estimated_gains = ((estimated_price - last_close) / last_close) * 100
             else:
                 estimated_price = last_close - (last_change * 0.5)
                 risk_level = 0

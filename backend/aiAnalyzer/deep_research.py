@@ -357,45 +357,14 @@ That means all 5 stocks are already considered good investments — so your reco
 Stocks to analyze:
 {chr(10).join(all_summaries)}
 """
-    # Try OpenAI first, fall back to Gemini
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": combined_prompt}],
-            max_tokens=2500
-        )
-        return response.choices[0].message.content
-
+        return prompt_ai.gpt(combined_prompt)
+    # Try OpenAI first, fall back to Gemini
     except Exception as e:
         print("OpenAI API failed:", str(e))
         print("Falling back to Gemini API...")
-
         try:
-            GEMINI_API_KEY = "AIzaSyBF0_vWi7TtJ2NdMerL_uB-13pjNsfRqrs"
-            GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-
-            headers = {
-                "Content-Type": "application/json",
-                "X-goog-api-key": GEMINI_API_KEY
-            }
-
-            payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {
-                                "text": combined_prompt
-                            }
-                        ]
-                    }
-                ]
-            }
-
-            r = requests.post(GEMINI_API_URL, headers=headers, json=payload, timeout=30)
-            r.raise_for_status()
-            data = r.json()
-            return data["candidates"][0]["content"]["parts"][0]["text"]
-
+            return prompt_ai.gemini(combined_prompt)
         except Exception as ge:
             print("Gemini API failed too:", str(ge))
             return "Both AI services failed. Please try again later."

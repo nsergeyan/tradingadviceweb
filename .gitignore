@@ -1,1 +1,6 @@
 .idea
+backend/TradingAdvice.db
+.venv
+backend/.env
+__pycache__
+.db

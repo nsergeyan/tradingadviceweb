@@ -2,7 +2,7 @@ def bos_strat(cash, symbol):
     #------------------------------
     # Fetch Data and Create Candles List
     #------------------------------
-    from database import update_weekly, fetch_ohlcv
+    from backend.database import update_weekly, fetch_ohlcv
 
     # Update or fetch weekly data
     update_weekly(symbol)

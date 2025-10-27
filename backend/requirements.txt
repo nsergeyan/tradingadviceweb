@@ -6,3 +6,7 @@ pandas == 2.3.2
 statsmodels == 0.14.5
 scikit-learn == 1.7.2
 backtrader[plotting] == 1.9.78.123
+#pip install newspaper3k
+#pip install lxml_html_clean
+#pip install --upgrade openai
+#pip install pytest

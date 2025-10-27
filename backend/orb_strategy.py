@@ -15,7 +15,7 @@ def orb_strategy(df: pd.DataFrame):
     """
 
     # Default Signal: latest_close, risk = 0, no gains
-    signals = [float(df["close"].iloc[-1]), 0, 0.0]
+    signals = [(float(df["close"].iloc[-1]), 0, 0.0)]
 
     # We analise the data from the last week.
     analysis_days = df.iloc[-5:]
@@ -128,7 +128,7 @@ def orb_strategy(df: pd.DataFrame):
                 risk_level = 0
                 estimated_gains = 0.0
 
-    signals.append([float(estimated_price), int(risk_level), float(estimated_gains)])
+    signals.append((float(estimated_price), int(risk_level), float(estimated_gains)))
     return signals[-1]
 
 if __name__ == '__main__':

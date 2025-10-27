@@ -301,8 +301,6 @@ def aiAnalyzeTopFiveStocks():
         for i, n in enumerate(news_items, 1):
             print(f"[{i}] {n['title']}")
             print(f"Publisher: {n.get('publisher', '')}")
-            print(f"URL: {n.get('link', '')}\n")
-            print(n.get('content', '')[:1000])  # shows up to 5000 symbols
             print(f"URL: {n.get('link', '')}")
             if not n.get("content"):
                 note = " (paywalled)" if n.get("paywalled") else " (no content extracted)"

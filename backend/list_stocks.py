@@ -39,7 +39,7 @@ def update_stock_volume() -> None:
     print("Updating stock csv")
 
     #Reads the 500 stocks in the S&P 500
-    path = os.path.join(os.path.dirname(__file__), 'DB for stock update/stocks.csv')
+    path = os.path.join(os.path.dirname(__file__), 'DbForStockUpdate/stocks.csv')
     with open(path, 'r') as file:
         reader = csv.reader(file)
         next(reader)
@@ -48,7 +48,7 @@ def update_stock_volume() -> None:
 
 
     #Writes to the CSV the stock symbol and the trade volume of the last week
-    path = os.path.join(os.path.dirname(__file__), "DB for stock update/stocks_volume.csv")
+    path = os.path.join(os.path.dirname(__file__), "DbForStockUpdate/stocks_volume.csv")
     with open(path, "w", newline="") as f:
 
         writer = csv.writer(f)

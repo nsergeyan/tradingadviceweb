@@ -1,2 +1,4 @@
 .idea
 backend/TradingAdvice.db
+.venv
+backend/.env

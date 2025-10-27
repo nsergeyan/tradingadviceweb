@@ -6,8 +6,11 @@ from final_strat import final_strategy
 
 print("Calling Stat Analasis")
 
-for stock in get_50_stocks()[:10]:
+for stock in get_50_stocks()[:5]:
     final_strategy(1000, stock)
+    print("\n")
+
+print("\n\n")
 
 print("Calling AI")
 aiAnalyzeTopFiveStocks()

@@ -3,7 +3,7 @@ import requests
 
 GPT_API_KEY = "YOUR_OPENAI_KEY_HERE"
 
-GEMINI_API_KEY = "AIzaSyBF0_vWi7TtJ2NdMerL_uB-13pjNsfRqrs"
+GEMINI_API_KEY = "AIzaSyCN7erQInU9KkNFYCAYrVBI3IgkQWrpg68"
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 

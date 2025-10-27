@@ -248,7 +248,7 @@ def initial_stock_ranking() -> list:
 
 
     for stock in stocks:
-        news_items = get_recent_news(stock, 5)["news"]
+        news_items = get_recent_news(stock, 3)["news"]
         news = "\n".join([f"{i + 1}. {n['title']} ({n['publisher']})" for i, n in enumerate(news_items)])
 
         print(f"{stock} news loaded")

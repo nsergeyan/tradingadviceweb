@@ -10,7 +10,7 @@ def final_strategy(cash, symbol):
     bos_price, bos_risk, bos_gains, bos_signal = bos_strat(cash, symbol)
 
     # FVG strat
-    df_weekly = fetch_ohlcv(symbol, "Weekly", limit=100)
+    df_weekly = fetch_ohlcv(symbol, "Weekly", limit=10)
     fvg_price, fvg_risk, fvg_gains = fair_value_gaps_strategy(df_weekly)
 
     # ORB strat
@@ -19,8 +19,8 @@ def final_strategy(cash, symbol):
     orb_price, orb_risk, orb_gains = orb_strategy(df_daily)
 
     # Weighted average risk and gains
-    risk = bos_risk*0.4 + fvg_risk*0.4 + orb_risk*0.2
-    gains = bos_gains*0.4 + fvg_gains*0.4 + orb_gains*0.2
+    risk = bos_risk*0.6 + fvg_risk*0.2 + orb_risk*0.2
+    gains = bos_gains*0.6 + fvg_gains*0.2 + orb_gains*0.2
 
     # Final decision
     if risk >= 1.5:
@@ -31,7 +31,7 @@ def final_strategy(cash, symbol):
         risk_comment = "Medium risk / exercise caution"
     else:
         decision = "DO NOT BUY"
-        risk_comment = "High risk / retain from investing"
+        risk_comment = "High risk / refrain from investing"
 
     # Print result
     print(f"Symbol: {symbol}")

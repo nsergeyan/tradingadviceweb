@@ -1,12 +1,12 @@
 import yfinance as yf
 import requests
 from openai import OpenAI
-import os, time, calendar
+import calendar
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlparse, urlunparse, urlencode, parse_qs, urlsplit, urlunsplit, quote_plus
+from urllib.parse import urlparse, urlencode, parse_qs, urlsplit, urlunsplit, quote_plus
 from newspaper import Article
 from backend.list_stocks import get_50_stocks
-from backend import prompt_ai
+from backend.aiAnalyzer import prompt_ai
 
 # Set your OpenAI API key
 # You can put your own api if you have a better one

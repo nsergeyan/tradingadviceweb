@@ -15,3 +15,5 @@ backtrader[plotting] == 1.9.78.123
 #pip install lxml_html_clean
 #pip install --upgrade openai
 #pip install pytest
+#pip install fastapi uvicorn ------> to run it type, uvicorn backend.main:app --reload.
+#Interactive API docs(easy UI) http://127.0.0.1:8000/docs

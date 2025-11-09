@@ -49,3 +49,21 @@ def gemini(prompt : str) -> str:
 
     return data["candidates"][0]["content"]["parts"][0]["text"]
 
+def local_llm(prompt : str) -> str:
+    """Prompts the local llm with the given prompt and returns the output of the llm"""
+    response = requests.post(
+        "http://localhost:11434/api/generate", #This port should be the same, even if running llama not in docker
+        json={
+            "model": "llama3",
+            "prompt": prompt,
+            "stream": False
+        },
+        timeout=1000
+    )
+    response.raise_for_status()
+    data = response.json()
+    return data["response"].strip()
+
+if __name__ == "__main__":
+    print(local_llm("Hello, can you hear and who are you."))
+

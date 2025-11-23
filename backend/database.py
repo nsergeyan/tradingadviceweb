@@ -10,7 +10,7 @@ load_dotenv()
 
 # Database initialization (file will be created in the current folder)
 DATABASE_PATH = os.getenv("DATABASE_PATH")
-db = SqliteDatabase(DATABASE_PATH)
+db =None
 
 # Get API key from environment
 ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY")
@@ -45,9 +45,12 @@ class PriceData(BaseModel):
 
 # Connect to the database and create tables if not exist
 def initialize_db():
+    global db
+    db = SqliteDatabase(DATABASE_PATH)
     db.connect()
     db.create_tables([MetaData, PriceData])
 
+initialize_db()
 
 # -------------------------
 # Data Update Function (Weekly)

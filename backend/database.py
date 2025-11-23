@@ -44,8 +44,9 @@ class PriceData(BaseModel):
 
 
 # Connect to the database and create tables if not exist
-db.connect()
-db.create_tables([MetaData, PriceData])
+def initialize_db():
+    db.connect()
+    db.create_tables([MetaData, PriceData])
 
 
 # -------------------------

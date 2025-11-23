@@ -1,16 +1,23 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from backend.aiAnalyzer import deep_research
 from backend.list_stocks import get_50_stocks
 from backend.bos_strat import bos_strat
 from backend.fair_value_gaps_strategy import fair_value_gaps_strategy
 from backend.orb_strategy import orb_strategy
-from backend.database import fetch_ohlcv, update_daily, update_weekly
+from backend.database import fetch_ohlcv, update_daily, update_weekly, initialize_db
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    initialize_db()
+    yield
 app = FastAPI(
     title="Trading Helper API",
     description="AI-powered stock research and news analysis",
-    version="1.1"
+    version="1.1",
+    lifespan=lifespan
 )
 
 analysis_cache = {}

@@ -1,6 +1,7 @@
 import pandas as pd
-from backend.database import fetch_ohlcv
-from backend.database import update_daily
+
+from backend.database.crud import fetch_ohlcv, update_ohlcv
+
 
 def orb_strategy(df: pd.DataFrame):
     """
@@ -132,6 +133,6 @@ def orb_strategy(df: pd.DataFrame):
     return signals[-1]
 
 if __name__ == '__main__':
-    update_daily("NVDA")
+    update_ohlcv("NVDA")
     df = fetch_ohlcv("NVDA", "Daily", limit=10)
     print(orb_strategy(df))

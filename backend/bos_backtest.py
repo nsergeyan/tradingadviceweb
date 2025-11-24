@@ -1,6 +1,8 @@
 import backtrader as bt
-from database import fetch_ohlcv, update_weekly
 import pandas as pd
+
+from backend.database.crud import update_ohlcv, fetch_ohlcv
+
 
 def bos_strat(candles): #same strategy as in bos_strat.py onlt difference is
                         #that this backtrader sells at 10% profit and 5% loss
@@ -88,7 +90,7 @@ class BosStrategy(bt.Strategy):
                 self.log(f'SELL EXECUTED, Price: {order.executed.price:.2f}, Value: {order.executed.value:.2f}')
 
 def get_bt_data(symbol, weeks=50):
-    update_weekly(symbol)
+    update_ohlcv(symbol)
     df = fetch_ohlcv(symbol, limit=None)
 
     # Makes sure of proper datetime index (doesn't work otherwise)

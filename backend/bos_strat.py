@@ -1,11 +1,13 @@
+from backend.database.crud import update_ohlcv, fetch_ohlcv
+
+
 def bos_strat(cash, symbol):
     #------------------------------
     # Fetch Data and Create Candles List
     #------------------------------
-    from backend.database import update_weekly, fetch_ohlcv
 
     # Update or fetch weekly data
-    update_weekly(symbol)
+    update_ohlcv(symbol, "Weekly")
 
     # Get data
     df = fetch_ohlcv(symbol, limit=100)

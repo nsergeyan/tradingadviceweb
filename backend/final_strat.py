@@ -1,9 +1,9 @@
 # final_strategy.py
 
 from backend.bos_strat import bos_strat
+from backend.database.crud import fetch_ohlcv, update_ohlcv
 from backend.fair_value_gaps_strategy import fair_value_gaps_strategy
 from backend.orb_strategy import orb_strategy
-from backend.database import fetch_ohlcv, update_daily
 
 def final_strategy(cash, symbol):
     # BOS strat
@@ -14,7 +14,7 @@ def final_strategy(cash, symbol):
     fvg_price, fvg_risk, fvg_gains = fair_value_gaps_strategy(df_weekly)
 
     # ORB strat
-    update_daily(symbol)
+    update_ohlcv(symbol, "Daily")
     df_daily = fetch_ohlcv(symbol, "Daily", limit=10)
     orb_price, orb_risk, orb_gains = orb_strategy(df_daily)
 

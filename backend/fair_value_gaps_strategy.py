@@ -1,6 +1,7 @@
 import pandas as pd
 
-from backend.database import fetch_ohlcv
+from backend.database.crud import fetch_ohlcv
+
 
 # https://www.mql5.com/en/articles/14261
 def fair_value_gaps_strategy(df: pd.DataFrame, threshold=0.7, max_bars=5):

@@ -1,6 +1,13 @@
+from contextlib import asynccontextmanager #missing, needed fro the line below
+from fastapi import FastAPI, HTTPException, Depends
+from backend.views import router as views_router #needed for frontend
+
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
 from backend.aiAnalyzer import deep_research
 from backend.database.crud import update_ohlcv, fetch_ohlcv
 from backend.database.database import get_db, db
@@ -9,6 +16,7 @@ from backend.list_stocks import get_50_stocks
 from backend.bos_strat import bos_strat
 from backend.fair_value_gaps_strategy import fair_value_gaps_strategy
 from backend.orb_strategy import orb_strategy
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,6 +36,8 @@ app = FastAPI(
     version="1.1",
     lifespan=lifespan
 )
+
+app.include_router(views_router)
 
 analysis_cache = {}
 
@@ -66,7 +76,11 @@ def analyze_specific_by_index(index: int):
         raise HTTPException(status_code=404, detail=f"Index {index} out of range (1–{len(keys)}).")
 
     symbol = keys[index - 1]
-    return {symbol: analysis_cache[symbol]}
+    try: #needed for html crashing (Kaan)
+        return {symbol: analysis_cache[symbol]}
+    except Exception as e:
+        # fallback if the cached value isn’t a dict
+        return {symbol: {"error": str(e)}}
 
 @app.get("/signals/top5", dependencies=[Depends(get_db)])
 def get_top5_signals():

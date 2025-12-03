@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, print_function,
 import backtrader as bt
 import pandas as pd
 
-from backend.database import fetch_ohlcv, update_weekly, update_daily
+from backend.database.crud import fetch_ohlcv, update_ohlcv
 
 
 class FVGStrategy(bt.Strategy):
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     cerebro = bt.Cerebro()
     cerebro.addstrategy(FVGStrategy)
 
-    update_weekly("AAPL")
+    update_ohlcv("AAPL")
     df = fetch_ohlcv("AAPL", "Weekly", limit=100)
     df["datetime"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
     df.drop("date", axis=1, inplace=True)

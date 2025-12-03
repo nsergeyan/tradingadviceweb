@@ -358,7 +358,15 @@ Stocks to analyze:
 {chr(10).join(all_summaries)}
 """
     try:
-        return prompt_ai.gpt(combined_prompt)
+        output_text = prompt_ai.gpt(combined_prompt)
+        stocks = initial_stock_ranking()
+        split_sections = output_text.split("Stock:")  # crude splitting approach
+
+        structured = {}
+        for name, section in zip(stocks, split_sections[1:]):
+            structured[name] = section.strip()
+
+        return structured  # Dict[str, str]
     # Try OpenAI first, fall back to Gemini
     except Exception as e:
         print("OpenAI API failed:", str(e))

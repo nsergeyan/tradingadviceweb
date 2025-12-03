@@ -272,13 +272,14 @@ def initial_stock_ranking() -> list:
 
 
 # --------------------- Ai2 ---------------------
-def aiAnalyzeTopFiveStocks():
+def aiAnalyzeTopFiveStocks(stock: str):
     """
     Analyze top 5 stocks using recent news (titles + full content) and AI reasoning.
     Input: list of 5 stock symbols
     Output: GPT-generated detailed analysis for all 5 stocks
     """
-    stocks = initial_stock_ranking()
+    # stocks = get_50_stocks()[:5]
+    stocks = [stock]
     all_summaries = []
 
     for symbol in stocks:
@@ -326,8 +327,8 @@ All sources for this stock: {', '.join(news_result['sources'])}
 
     # Combine all 5 stock summaries into a single GPT prompt
     combined_prompt = f"""
-You are a financial analyst AI. Your task is to evaluate 5 NASDAQ stocks chosen as the best current opportunities by another system.
-That means all 5 stocks are already considered good investments — so your recommendation should always be **Buy** or **Strong Buy**.
+    DONT SAY "Here's an analysis of"
+You are a financial analyst AI. YOU HAVE  TO WRITE DOWN THE SUMMARY OF THE NEWS FOR EACH STOCK.
 
 ### Important Guidelines:
 - Focus mainly on the news content (titles + content). The news is the most important part of your reasoning.
@@ -357,25 +358,9 @@ That means all 5 stocks are already considered good investments — so your reco
 Stocks to analyze:
 {chr(10).join(all_summaries)}
 """
-    try:
-        output_text = prompt_ai.gpt(combined_prompt)
-        stocks = initial_stock_ranking()
-        split_sections = output_text.split("Stock:")  # crude splitting approach
+    output_text = prompt_ai.local_llm(combined_prompt)
+    return output_text
 
-        structured = {}
-        for name, section in zip(stocks, split_sections[1:]):
-            structured[name] = section.strip()
-
-        return structured  # Dict[str, str]
-    # Try OpenAI first, fall back to Gemini
-    except Exception as e:
-        print("OpenAI API failed:", str(e))
-        print("Falling back to Gemini API...")
-        try:
-            return prompt_ai.gemini(combined_prompt)
-        except Exception as ge:
-            print("Gemini API failed too:", str(ge))
-            return "Both AI services failed. Please try again later."
 
 if __name__ == "__main__":
-    print(aiAnalyzeTopFiveStocks())
+    print(aiAnalyzeTopFiveStocks(get_50_stocks()[1]))

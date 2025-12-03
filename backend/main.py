@@ -45,42 +45,26 @@ analysis_cache = {}
 def root():
     return {"message": "Welcome to the Trading Helper API!"}
 
-
-@app.get("/analyze/top5", dependencies=[Depends(get_db)])
-def analyze_top5():
-    """
-    Example: GET /analyze/top5
-    Runs deep research and returns dictionary of 5 stock analyses.
-    """
-    try:
-        result = deep_research.aiAnalyzeTopFiveStocks()
-        analysis_cache.clear()
-        analysis_cache.update(result)  # cache result
-        return {"analyzed": list(result.keys()), "details": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Deep research failed: {e}")
-
-
 @app.get("/analyze/top5/{index}", dependencies=[Depends(get_db)])
 def analyze_specific_by_index(index: int):
     """
     Example: GET /analyze/top5/3
-    Returns the 3rd stock from the last deep analysis run.
     """
-    if not analysis_cache:
-        raise HTTPException(status_code=400, detail="Run /analyze/top5 first to generate data.")
+    stocks = get_50_stocks()
 
-    keys = list(analysis_cache.keys())
+    # Python list is 0-based, user is 1-based → adjust
+    if index < 0 or index > len(stocks):
+        raise HTTPException(
+            status_code=404,
+            detail=f"Index {index} out of range (1–{len(stocks)})."
+        )
 
-    if not (1 <= index <= len(keys)):
-        raise HTTPException(status_code=404, detail=f"Index {index} out of range (1–{len(keys)}).")
+    stock = stocks[index]
 
-    symbol = keys[index - 1]
-    try: #needed for html crashing (Kaan)
-        return {symbol: analysis_cache[symbol]}
+    try:
+        return deep_research.aiAnalyzeTopFiveStocks(stock)
     except Exception as e:
-        # fallback if the cached value isn’t a dict
-        return {symbol: {"error": str(e)}}
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/signals/top5", dependencies=[Depends(get_db)])
 def get_top5_signals():

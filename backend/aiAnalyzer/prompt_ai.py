@@ -14,9 +14,9 @@ def gpt(prompt : str) -> str:
     client = OpenAI(api_key=GPT_API_KEY)
 
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-5-nano",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=2500
+        #max_tokens=2500
     )
     return response.choices[0].message.content
 

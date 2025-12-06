@@ -354,7 +354,7 @@ You are a financial analyst AI. YOU HAVE  TO WRITE DOWN THE SUMMARY OF THE NEWS 
 - Always connect your recommendation directly to the news.
 
 **IMPORTANT:** At the end of your analysis for each stock, **list all news sources (publishers) used** in a section called **Sources**.
-
+DO NOT SAY HERE ARE THE ANALYSIS. JUST GO STRAIGHT TO ANALYSIS.
 Stocks to analyze:
 {chr(10).join(all_summaries)}
 """

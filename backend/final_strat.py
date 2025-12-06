@@ -34,13 +34,22 @@ def final_strategy(cash, symbol):
         risk_comment = "High risk / refrain from investing"
 
     # Print result
-    print(f"Symbol: {symbol}")
-    print(f"Decision: {decision}")
-    print(f"Risk score: {risk:.2f} ({risk_comment})")
-    print(f"Estimated gains: {gains:.2f}")
-    print(f"BOS signal: {bos_signal}")
-    print(f"FVG signal price: {fvg_price}")
-    print(f"ORB signal price: {orb_price}")
+    # print(f"Symbol: {symbol}")
+    # print(f"Decision: {decision}")
+    # print(f"Risk score: {risk:.2f} ({risk_comment})")
+    # print(f"Estimated gains: {gains:.2f}")
+    # print(f"BOS signal: {bos_signal}")
+    # print(f"FVG signal price: {fvg_price}")
+    # print(f"ORB signal price: {orb_price}")
+    return {
+        "decision": decision,
+        "avg_risk": round(risk, 2),
+        "avg_gains": round(gains, 2),
+        "bos_signal": bos_signal,
+        "fvg_price": fvg_price,
+        "orb_price": orb_price
+    }
+
 
 if __name__ == "__main__":
     final_strategy(1000, "AAPL")

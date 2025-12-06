@@ -40,7 +40,10 @@ def update_ohlcv(symbol: str, info_type: str = "Weekly") -> None:
     data = r.json()
 
     # -------- Extract Meta --------
-    meta = data["Meta Data"]
+    try:
+        meta = data["Meta Data"]
+    except Exception:
+        return
     last_refreshed = meta.get("3. Last Refreshed")
     time_zone = meta.get("5. Time Zone") or meta.get("4. Time Zone")
 
@@ -120,5 +123,4 @@ def fetch_ohlcv(
         query = query.limit(limit)
 
     df = pd.DataFrame(list(query.dicts()))
-
     return df

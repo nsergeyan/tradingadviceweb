@@ -9,7 +9,7 @@ def final_strategy(cash, symbol):
     # BOS strat
     bos_price, bos_risk, bos_gains, bos_signal = bos_strat(cash, symbol)
 
-    # FVG strat
+    # FVG stra
     df_weekly = fetch_ohlcv(symbol, "Weekly", limit=10)
     fvg_price, fvg_risk, fvg_gains = fair_value_gaps_strategy(df_weekly)
 

@@ -9,3 +9,5 @@ router = APIRouter()
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+#to run frontend: uvicorn backend.main:app --reload

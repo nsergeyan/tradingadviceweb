@@ -21,5 +21,6 @@ backtrader[plotting] == 1.9.78.123
 #Kaan found these installs missing
 #pip install yfinance (Kaan)
 #pip install openai (Kaan)
+#jinja2
 
 

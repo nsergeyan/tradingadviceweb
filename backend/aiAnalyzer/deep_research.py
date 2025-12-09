@@ -10,8 +10,7 @@ from backend.aiAnalyzer import prompt_ai
 
 # Set your OpenAI API key
 # You can put your own api if you have a better one
-api_key = "YOUR_OPENAI_KEY_HERE"
-client = OpenAI(api_key=api_key)
+
 
 # --------------------- Validation ---------------------
 def is_valid_nasdaq(symbol):
@@ -255,18 +254,6 @@ def initial_stock_ranking() -> list:
         prompt += f"\n {stock}: \n {news}"
 
     print("sending")
-
-    try:
-        output = prompt_ai.gpt(prompt)
-    except Exception as e:
-        print(f"{e}, trying gemini")
-        try:
-            output = prompt_ai.gemini(prompt)
-        except Exception as e:
-            raise ValueError("Ai is unavalible, please try again later") #I used a random error for now, can make coustom later if needed
-
-
-    return [s.strip() for s in output.split(",")[:5]]
 
 
 

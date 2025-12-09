@@ -1,6 +1,6 @@
 from starlette.responses import JSONResponse
 
-from backend.views import router as views_router #needed for frontend
+from frontend.views import router as views_router
 
 from contextlib import asynccontextmanager
 
@@ -9,7 +9,7 @@ from backend.aiAnalyzer import deep_research
 from backend.database.database import get_db, db
 from backend.database.models import PriceData, MetaData
 from backend.list_stocks import get_50_stocks
-
+from backend.final_strat import final_strategy
 
 
 @asynccontextmanager
@@ -68,7 +68,6 @@ def analyze_specific_by_index(index: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-from backend.final_strat import final_strategy  # <- import
 
 @app.get("/signals/top5", dependencies=[Depends(get_db)])
 def get_top5_signals():

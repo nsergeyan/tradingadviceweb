@@ -64,15 +64,11 @@ def local_llm(prompt: str, system_prompt: str = None) -> str:
     response = requests.post(
         "http://localhost:11434/api/generate",
         json={
-            "model": "gemma3:12b",
+            "model": "llama3",
             "prompt": full_prompt,
-            "stream": False,
-            "options": {
-                "num_ctx": 128000,
-                # "num_predict": 12800
-            }
+            "stream": False  # non-streaming mode for simplicity
         },
-        timeout=1000
+        timeout=300  # increase if processing long full-article prompts
     )
 
     response.raise_for_status()

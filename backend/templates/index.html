@@ -17,8 +17,8 @@
     .error { margin-top:0.5rem; color:#fecaca; font-size:0.85rem; }
     table { width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:0.5rem; }
     th, td { padding:0.35rem 0.2rem; border-bottom:1px solid #1f2937; text-align:left; }
-    .clickable-symbol { cursor: pointer; color:#3b82f6; text-decoration: underline; }
-    .clickable-symbol:hover { color:#60a5fa; }
+    .clickable-symbol { cursor: pointer; font-weight: 700; color:#ffffff; text-decoration: underline; }
+    .clickable-symbol:hover { color:#e5e5e5; text-decoration:underline; }
 
     #news-section {
       margin-top:1.5rem;
@@ -33,14 +33,20 @@
     #news-content { margin-top:1rem; }
     .news-item { padding:0.75rem; margin-bottom:0.5rem; background:#0f172a; border-radius:0.5rem; border-left:3px solid #3b82f6; max-height:300px; overflow-y:auto; overflow-x:hidden;word-wrap:break-word;}
     .news-item pre {
-  white-space:pre-wrap;
-  word-wrap:break-word;
-  overflow-x:hidden;
-}
+    white-space:pre-wrap;
+    word-wrap:break-word;
+    overflow-x:hidden; }
+
     h3 { margin:0 0 0.5rem 0; font-size:1rem; }
     p { margin:0 0 0.5rem 0; line-height:1.4; }
     .sources { font-size:0.75rem; color:#9ca3af; margin-top:0.5rem; }
     a { color:#3b82f6; text-decoration:underline; }
+
+    # Decision Color Coding
+    .decision-buy { color: #22c55e; font-weight: 600; }
+    .decision-caution { color: #eab308; font-weight: 600; }
+    .decision-nobuy { color: #ef4444; font-weight: 600; }
+
   </style>
 </head>
 <body>
@@ -61,6 +67,7 @@
       <button id="btn-signals" class="success">Get signals</button>
       <div id="signals-error" class="error"></div>
       <div id="signals-content"><small>No data yet.</small></div>
+      <small id="signals-hint" style="color:#9ca3af; display:none; margin-top:0.5rem; display:block;"></small>
     </div>
   </div>
 
@@ -131,27 +138,52 @@
     };
 
     function renderSignalsTable(symbols, sigs) {
-      let html = "<table><thead><tr><th>Symbol</th><th>Decision</th><th>Risk</th><th>Gains</th></tr></thead><tbody>";
-      for (let i=0;i<symbols.length;i++) {
-        const s = symbols[i], info = sigs[s];
-        if (!info || info.error) {
-          html += `<tr><td><span class="clickable-symbol" data-symbol="${s}" data-index="${i}">${s}</span></td><td colspan="3" style="color:#fecaca;">${info?.error || "error"}</td></tr>`;
-        } else {
-          html += `<tr>
-            <td><span class="clickable-symbol" data-symbol="${s}" data-index="${i}">${s}</span></td>
-            <td>${info.decision}</td>
-            <td>${Number(info.avg_risk||0).toFixed(2)}</td>
-            <td>${Number(info.avg_gains||0).toFixed(2)}</td>
-          </tr>`;
-        }
-      }
-      html += "</tbody></table>";
-      signalsContent.innerHTML = html;
+  let html = "<table><thead><tr><th>Symbol</th><th>Decision</th><th>Risk</th><th>Gains</th></tr></thead><tbody>";
 
-      document.querySelectorAll('.clickable-symbol').forEach(el => {
-        el.onclick = () => fetchAnalysisByIndex(Number(el.dataset.index), el.dataset.symbol);
-      });
+  for (let i=0;i<symbols.length;i++) {
+    const s = symbols[i];
+    const info = sigs[s];
+
+    if (!info || info.error) {
+      html += `<tr>
+        <td><span class="clickable-symbol" data-symbol="${s}" data-index="${i}">${s}</span></td>
+        <td colspan="3" style="color:#fecaca;">${info?.error || "error"}</td>
+      </tr>`;
+      continue;
     }
+
+    // Color Coding Logic
+    let decisionClass = "decision-nobuy"; // default red
+    const d = info.decision.toLowerCase();
+
+    if (d.includes("do not buy") || d.includes("don't buy")) {
+      decisionClass = "decision-nobuy"; // red
+    }
+    else if (d.includes("caution")) {
+      decisionClass = "decision-caution"; // yellow
+    }
+    else if (d.includes("buy")) {
+      decisionClass = "decision-buy"; // green
+    }
+
+    html += `<tr>
+      <td><span class="clickable-symbol" data-symbol="${s}" data-index="${i}">${s}</span></td>
+      <td class="${decisionClass}">${info.decision}</td>
+      <td>${Number(info.avg_risk || 0).toFixed(2)}</td>
+      <td>${Number(info.avg_gains || 0).toFixed(2)}</td>
+    </tr>`;
+  }
+
+  html += "</tbody></table>";
+  signalsContent.innerHTML = html;
+  document.getElementById("signals-hint").textContent = "Click on a symbol to access news";
+  document.getElementById("signals-hint").style.display = "block";
+
+  document.querySelectorAll('.clickable-symbol').forEach(el => {
+    el.onclick = () => fetchAnalysisByIndex(Number(el.dataset.index), el.dataset.symbol);
+  });
+}
+
 
     async function fetchAnalysisByIndex(index, symbolHint="") {
       newsSection.hidden=false;

@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trading Buddy (AI & Statistical Integration)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+
+      --accent-color: #4f46e5; /* Indigo 600 */
+      --accent-light: #e0e7ff;
+
+      --table-header-bg: #4f46e5;
+      --table-row-hover: #f1f5f9;
+
+      --summary-bg: #ffffff;
+      --summary-border: #4f46e5;
+    }
+
+    body.dark-mode {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+
+      --accent-color: #818cf8;
+      --accent-light: rgba(79, 70, 229, 0.2);
+
+      --table-header-bg: #312e81;
+      --table-row-hover: #334155;
+
+      --summary-bg: #1e293b;
+      --summary-border: #818cf8;
+    }
+
+    body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 2rem; background: var(--bg-primary); color: var(--text-primary); transition: all 0.3s ease; line-height: 1.5; }
+
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+    h1 { margin: 0; font-size: 1.5rem; color: var(--text-primary); }
+    small { display: block; margin-top: 0.25rem; color: var(--text-muted); }
+
+    button { padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; transition: opacity 0.2s; font-size: 0.9rem; }
+    button.primary { background: var(--accent-color); color: white; }
+    button.theme-toggle { background: var(--bg-secondary); border: 1px solid var(--border-color); color: var(--text-primary); }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Cards */
+    .card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 1.5rem; }
+
+    /* Table */
+    table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; }
+    th { background: var(--table-header-bg); color: white; padding: 0.75rem; text-align: left; font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    th:first-child { border-top-left-radius: 0.5rem; }
+    th:last-child { border-top-right-radius: 0.5rem; }
+    td { padding: 0.75rem; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); }
+    tr:last-child td:first-child { border-bottom-left-radius: 0.5rem; }
+    tr:last-child td:last-child { border-bottom-right-radius: 0.5rem; }
+    tbody tr:hover td { background: var(--table-row-hover); }
+
+    .clickable-symbol { color: var(--accent-color); font-weight: 700; cursor: pointer; text-decoration: underline; text-decoration-thickness: 2px; }
+
+    /* Decision Colors */
+    .decision-buy { color: #22c55e; font-weight: 700; }     /* Green */
+    .decision-caution { color: #eab308; font-weight: 700; } /* Yellow */
+    .decision-nobuy { color: #ef4444; font-weight: 700; }   /* Red */
+
+    /* --- AI SUMMARY CARD STYLES --- */
+    .ai-summary-card {
+      background: var(--summary-bg);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--summary-border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .ai-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ai-title svg { width: 24px; height: 24px; color: var(--accent-color); }
+
+    .ai-content { font-size: 1rem; color: var(--text-primary); }
+    .ai-content p { margin-bottom: 1rem; line-height: 1.6; }
+    .ai-content ul { padding-left: 1.2rem; margin-bottom: 1rem; }
+    .ai-content li { margin-bottom: 0.5rem; position: relative; list-style: none; }
+
+    .ai-content li::before {
+      content: "•";
+      color: var(--accent-color);
+      font-weight: bold;
+      display: inline-block;
+      width: 1em;
+      margin-left: -1em;
+    }
+
+    .ai-content strong { color: var(--accent-color); font-weight: 700; }
+
+    .ai-section-header {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.25rem;
+    }
+
+    /* News Items */
+    .sources-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+    .news-item { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; transition: transform 0.2s; }
+    .news-item:hover { transform: translateY(-2px); border-color: var(--accent-color); }
+    .news-item h3 { font-size: 1rem; margin: 0 0 0.5rem 0; color: var(--text-primary); }
+    .news-item p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .news-meta a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+
+    .error { color: #ef4444; margin-top: 0.5rem; }
+
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div>
+      <h1>Trading Buddy</h1>
+      <small>AI-Powered Market Analysis</small>
+    </div>
+    <button class="theme-toggle" id="theme-toggle">Dark Mode</button>
+  </div>
+
+  <!-- Signal Card -->
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2>Top 5 Signals</h2>
+      <button id="btn-signals" class="primary">Refresh Signals</button>
+    </div>
+    <div id="signals-error" class="error"></div>
+    <div id="signals-content" style="margin-top:1rem;"><small>Click refresh to load data.</small></div>
+    <small id="signals-hint" style="display:none; margin-top:0.5rem; color:var(--text-muted);">Select a symbol below for detailed AI analysis.</small>
+  </div>
+
+  <!-- News / AI Analysis Section -->
+  <div id="news-section" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <h2 style="margin:0;">Analysis: <span id="news-symbol" style="color:var(--accent-color)"></span></h2>
+      <button id="close-news" style="background:transparent; border:1px solid var(--border-color); color:var(--text-primary);">Close Panel</button>
+    </div>
+
+    <div id="news-loading" hidden style="text-align:center; padding:2rem;"><small>Crunching data...</small></div>
+    <div id="news-error" class="error"></div>
+    <div id="news-content"></div>
+  </div>
+
+  <script>
+    const BACKEND_URL = "http://127.0.0.1:8000";
+
+    const signalsBtn = document.getElementById("btn-signals");
+    const signalsContent = document.getElementById("signals-content");
+    const signalsError = document.getElementById("signals-error");
+
+    const newsSection = document.getElementById("news-section");
+    const newsSymbolEl = document.getElementById("news-symbol");
+    const newsLoading = document.getElementById("news-loading");
+    const newsError = document.getElementById("news-error");
+    const newsContent = document.getElementById("news-content");
+    const closeNewsBtn = document.getElementById("close-news");
+
+    const themeToggle = document.getElementById("theme-toggle");
+
+    // Theme Logic
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeToggle.innerHTML = 'Light Mode';
+    }
+
+    themeToggle.onclick = () => {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      themeToggle.innerHTML = isDark ? 'Light Mode' : 'Dark Mode';
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    };
+
+    // Signals Logic
+    signalsBtn.onclick = async () => {
+      signalsBtn.disabled = true;
+      signalsBtn.innerText = "Loading...";
+      signalsError.textContent = "";
+      try {
+        const res = await fetch(`${BACKEND_URL}/signals/top5`);
+        const data = await res.json();
+        const symbols = data.symbols || [];
+        const sigs = data.signals || {};
+        if (!symbols.length) { signalsContent.innerHTML="<small>No symbols returned.</small>"; return; }
+        renderSignalsTable(symbols, sigs);
+      } catch(e) {
+        signalsError.textContent = "Error: " + e.message;
+      } finally {
+        signalsBtn.disabled = false;
+        signalsBtn.innerText = "Refresh Signals";
+      }
+    };
+
+    function renderSignalsTable(symbols, sigs) {
+      let html = "<table><thead><tr><th>Symbol</th><th>Decision</th><th>Risk</th><th>Exp. Gains</th></tr></thead><tbody>";
+      symbols.forEach((s, i) => {
+        const info = sigs[s];
+        if (!info || info.error) {
+          html += `<tr><td>${s}</td><td colspan="3" style="color:#ef4444">Data Unavailable</td></tr>`;
+          return;
+        }
+
+        // --- FIXED COLOR LOGIC ---
+        const d = info.decision.toLowerCase();
+        let dClass = "decision-nobuy"; // Default Red
+
+        if (d.includes("not") || d.includes("don't") || d.includes("sell")) {
+            dClass = "decision-nobuy"; // RED
+        } else if (d.includes("caution") || d.includes("hold")) {
+            dClass = "decision-caution"; // YELLOW
+        } else if (d.includes("buy")) {
+            dClass = "decision-buy"; // GREEN
+        }
+
+        html += `<tr>
+          <td><span class="clickable-symbol" onclick="fetchAnalysisByIndex(${i}, '${s}')">${s}</span></td>
+          <td class="${dClass}">${info.decision}</td>
+          <td>${Number(info.avg_risk || 0).toFixed(2)}</td>
+          <td>${Number(info.avg_gains || 0).toFixed(2)}%</td>
+        </tr>`;
+      });
+      html += "</tbody></table>";
+      signalsContent.innerHTML = html;
+      document.getElementById("signals-hint").style.display = "block";
+    }
+
+    // Expose function globally
+    window.fetchAnalysisByIndex = async function(index, symbolHint="") {
+      newsSection.hidden = false;
+      newsSymbolEl.textContent = symbolHint;
+      newsLoading.hidden = false;
+      newsError.textContent = "";
+      newsContent.innerHTML = "";
+      newsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/analyze/top5/${index}`);
+        const data = await res.json();
+        displayAnalysisResult(data);
+      } catch(e) {
+        newsError.textContent = "Failed to load analysis.";
+        newsContent.innerHTML = `<div class="card"><p style="color:#ef4444">${e.message}</p></div>`;
+      } finally { newsLoading.hidden = true; }
+    }
+
+    // --- ENHANCED PARSING LOGIC ---
+
+    function cleanRawText(text) {
+      if (!text) return "";
+      let clean = String(text);
+
+      // Attempt to parse if double-encoded JSON string
+      try {
+        if (clean.trim().startsWith('"')) {
+          clean = JSON.parse(clean);
+        }
+      } catch (e) {
+        clean = clean.replace(/^"|"$/g, '');
+      }
+
+      // Replace literal escaped newlines that appear in screenshots
+      clean = clean.replace(/\\n/g, '\n');
+      // Clean backslashed quotes
+      clean = clean.replace(/\\"/g, '"');
+      return clean;
+    }
+
+    function displayAnalysisResult(data) {
+      const symbol = data.symbol || newsSymbolEl.textContent || "N/A";
+      newsSymbolEl.textContent = symbol;
+      let html = "";
+
+      // 1. Determine Content: Check 'summary', 'analysis', or if 'data' is just a string
+      let rawContent = data.summary || data.analysis || data.content;
+      if (!rawContent && typeof data === 'string') rawContent = data;
+
+      // 2. Render AI Summary
+      if (rawContent) {
+        const cleanedText = cleanRawText(rawContent);
+        html += `
+          <div class="ai-summary-card">
+            <div class="ai-title">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              AI Insights
+            </div>
+            <div class="ai-content">
+              ${parseMarkdownToHtml(cleanedText)}
+            </div>
+          </div>
+        `;
+      }
+
+      // 3. Render News Sources
+      if (Array.isArray(data.news) && data.news.length > 0) {
+        html += `<h3 style="margin-bottom:1rem; color:var(--text-secondary);">Source Articles</h3>`;
+        html += `<div class="sources-container">`;
+        data.news.forEach(n => {
+          html += `
+            <div class="news-item">
+              <h3>${n.title || "No Title"}</h3>
+              <p>${(n.content || "").substring(0, 150)}...</p>
+              <div class="news-meta">
+                <span>${n.publisher || "Unknown"}</span>
+                ${n.link ? `<a href="${n.link}" target="_blank">Read &rarr;</a>` : ""}
+              </div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      // 4. FALLBACK: If nothing matched
+      if (!html) {
+        html = `
+          <div class="card" style="border-left: 4px solid #ef4444;">
+            <h3 style="color:#ef4444; margin-top:0;">Data Format Check</h3>
+            <p>Could not auto-detect 'summary' or 'news' fields.</p>
+            <details>
+              <summary style="cursor:pointer; color:var(--accent-color); font-weight:600;">View Raw Response</summary>
+              <pre style="margin-top:1rem; background:var(--bg-primary); padding:1rem; overflow:auto; border-radius:0.5rem; font-size:0.8rem;">${JSON.stringify(data, null, 2)}</pre>
+            </details>
+          </div>
+        `;
+      }
+
+      newsContent.innerHTML = html;
+    }
+
+    function parseMarkdownToHtml(text) {
+      if (!text) return "";
+      const lines = text.split('\n');
+      let html = "";
+      let inList = false;
+
+      lines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+
+        // Detect Header: Starts with ** (but not list item) OR ends with :
+        const isHeader = (line.startsWith('**') && !line.includes('* **')) || (line.endsWith(':') && !line.startsWith('*') && !line.startsWith('-'));
+
+        // Detect List: Starts with *, -, or Number.
+        const isList = line.startsWith('* ') || line.startsWith('- ') || /^\d+\./.test(line);
+
+        if (isHeader) {
+          if (inList) { html += "</ul>"; inList = false; }
+          html += `<div class="ai-section-header">${line.replace(/\*\*/g, '')}</div>`;
+        }
+        else if (isList) {
+          if (!inList) { html += "<ul>"; inList = true; }
+          let content = line.replace(/^(\*|-|\d+\.)\s+/, '');
+          html += `<li>${formatBold(content)}</li>`;
+        }
+        else {
+          if (inList) { html += "</ul>"; inList = false; }
+          html += `<p>${formatBold(line)}</p>`;
+        }
+      });
+      if (inList) html += "</ul>";
+      return html;
+    }
+
+    function formatBold(text) {
+      return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    closeNewsBtn.onclick = () => { newsSection.hidden = true; };
+  </script>
+</body>
+</html>

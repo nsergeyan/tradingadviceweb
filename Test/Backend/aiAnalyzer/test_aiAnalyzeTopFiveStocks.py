@@ -1,3 +1,6 @@
+# Updated unit tests reflecting new deep_research.aiAnalyzeTopFiveStocks behavior
+# using local_llm instead of OpenAI/Gemini
+
 import pytest
 from unittest.mock import patch, MagicMock
 import pandas as pd
@@ -26,6 +29,7 @@ def mock_news():
                     "publisher": "Mock Times",
                     "link": "http://mocknews.com/article1",
                     "content": "Mock content of the article.",
+                    "paywalled": False,
                 }
             ],
             "sources": ["Mock Times"],
@@ -33,46 +37,32 @@ def mock_news():
         yield mock_news_func
 
 
-@pytest.fixture
-def mock_initial_ranking():
-    with patch("backend.aiAnalyzer.deep_research.initial_stock_ranking") as mock_ranking:
-        mock_ranking.return_value = ["MOCK1", "MOCK2", "MOCK3", "MOCK4", "MOCK5"]
-        yield mock_ranking
-
-
 # ---------- Tests ----------
 
-def test_openai_success(mock_initial_ranking, mock_yfinance, mock_news):
-    """Ensure OpenAI (gpt) is called successfully."""
-    with patch("backend.prompt_ai.gpt", return_value="Mock AI Analysis") as mock_gpt:
-        result = aiAnalyzeTopFiveStocks()
-        assert "Mock AI Analysis" in result
-        mock_gpt.assert_called_once()
+
+def test_llm_success(mock_yfinance, mock_news):
+    """Ensure that local_llm is called and returns expected output."""
+    with patch("backend.aiAnalyzer.deep_research.prompt_ai.local_llm", return_value="Mock Local LLM Output") as mock_llm:
+        result = aiAnalyzeTopFiveStocks("MOCK")
+        assert "Mock Local LLM Output" in result
+        mock_llm.assert_called_once()
         mock_yfinance.assert_called()
         mock_news.assert_called()
 
 
-def test_openai_failure_then_gemini_success(mock_initial_ranking, mock_yfinance, mock_news):
-    """If OpenAI fails, Gemini should be used instead."""
-    with patch("backend.prompt_ai.gpt", side_effect=Exception("OpenAI down")) as mock_gpt, \
-         patch("backend.prompt_ai.gemini", return_value="Gemini AI Analysis") as mock_gemini:
-        result = aiAnalyzeTopFiveStocks()
-        assert "Gemini AI Analysis" in result
-        mock_gpt.assert_called_once()
-        mock_gemini.assert_called_once()
+def test_llm_failure_raises_exception(mock_yfinance, mock_news):
+    """If local_llm fails, the exception should propagate upward."""
+    with patch("backend.aiAnalyzer.deep_research.prompt_ai.local_llm",
+               side_effect=Exception("LLM crashed")):
+        with pytest.raises(Exception) as exc:
+            aiAnalyzeTopFiveStocks("MOCK")
+
+        assert "LLM crashed" in str(exc.value)
 
 
-def test_both_apis_fail(mock_initial_ranking, mock_yfinance, mock_news):
-    """If both AI services fail, fallback message should appear."""
-    with patch("backend.prompt_ai.gpt", side_effect=Exception("OpenAI down")), \
-         patch("backend.prompt_ai.gemini", side_effect=Exception("Gemini error")):
-        result = aiAnalyzeTopFiveStocks()
-        assert "Both AI services failed" in result
-
-
-def test_empty_news(mock_initial_ranking, mock_yfinance):
-    """Handles case when no news articles are available."""
+def test_empty_news(mock_yfinance):
+    """Handles the case where no news articles exist."""
     with patch("backend.aiAnalyzer.deep_research.get_recent_news", return_value={"news": [], "sources": []}), \
-         patch("backend.prompt_ai.gpt", return_value="Empty news analysis"):
-        result = aiAnalyzeTopFiveStocks()
+         patch("backend.aiAnalyzer.deep_research.prompt_ai.local_llm", return_value="Empty news analysis"):
+        result = aiAnalyzeTopFiveStocks("MOCK")
         assert "Empty news analysis" in result

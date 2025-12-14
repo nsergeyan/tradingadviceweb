@@ -10,8 +10,7 @@ from backend.aiAnalyzer import prompt_ai
 
 # Set your OpenAI API key
 # You can put your own api if you have a better one
-api_key = "YOUR_OPENAI_KEY_HERE"
-client = OpenAI(api_key=api_key)
+
 
 # --------------------- Validation ---------------------
 def is_valid_nasdaq(symbol):
@@ -256,18 +255,6 @@ def initial_stock_ranking() -> list:
 
     print("sending")
 
-    try:
-        output = prompt_ai.gpt(prompt)
-    except Exception as e:
-        print(f"{e}, trying gemini")
-        try:
-            output = prompt_ai.gemini(prompt)
-        except Exception as e:
-            raise ValueError("Ai is unavalible, please try again later") #I used a random error for now, can make coustom later if needed
-
-
-    return [s.strip() for s in output.split(",")[:5]]
-
 
 
 
@@ -327,37 +314,33 @@ All sources for this stock: {', '.join(news_result['sources'])}
 
     # Combine all 5 stock summaries into a single GPT prompt
     combined_prompt = f"""
-    DONT SAY "Here's an analysis of"
-You are a financial analyst AI. YOU HAVE  TO WRITE DOWN THE SUMMARY OF THE NEWS FOR EACH STOCK.
+    Role: You are a clear, helpful financial guide explaining stock news to a beginner investor.
+    Task: Summarize the news data below into a simple, easy-to-read report.
 
-### Important Guidelines:
-- Focus mainly on the news content (titles + content). The news is the most important part of your reasoning.
-- Company info and recent price trends can be mentioned, but only as background context.
-- Always explain clearly **why the news supports a Buy recommendation**.
-- Also point out any **risks** or negative details from the news, so investors understand the downsides too.
-- Write in a clear, simple, beginner-friendly style.
+    STRICT RULES:
+    1. NO conversational filler (DO NOT say "Here is a summary", "It appears", "Let me know").
+    2. Start IMMEDIATELY with the first header.
+    3. Use simple language. Explain any complex terms.
+    4. Keep it short and direct.
 
-### For each stock, provide:
-1. **News Summary**
-   - Summarize the main points of the news articles in simple language.
-   - Highlight what’s positive and also mention any negative signals.
+    DATA TO ANALYZE:
+    {chr(10).join(all_summaries)}
 
-2. **Opportunities**
-   - List the positive news and growth drivers.
+    REQUIRED OUTPUT FORMAT (Follow strictly):
 
-3. **Risks**
-   - List potential problems or uncertainties mentioned in the news.
-   
-### Tone and Style:
-- Use bullet points and short sections.
-- Be clear, simple, and structured.
-- Always connect your recommendation directly to the news.
+    **What is Happening:**
+    [Write 2-3 simple sentences explaining the main news story clearly.]
 
-**IMPORTANT:** At the end of your analysis for each stock, **list all news sources (publishers) used** in a section called **Sources**.
-DO NOT SAY HERE ARE THE ANALYSIS. JUST GO STRAIGHT TO ANALYSIS.
-Stocks to analyze:
-{chr(10).join(all_summaries)}
-"""
+    **Why This looks Good:**
+    * [Simple bullet point about the positive news]
+    * [Simple bullet point about growth or profits]
+
+    **What to Watch Out For:**
+    * [Simple bullet point about the risks or bad news]
+
+    **Bottom Line:**
+    [One simple sentence summarizing if this looks like a strong opportunity or a risky one.]
+    """
     output_text = prompt_ai.local_llm(combined_prompt)
     return output_text
 

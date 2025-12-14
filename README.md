@@ -56,7 +56,7 @@ The app is built as a **FastAPI backend** with a **minimal HTML/JavaScript front
 - Price data from **Alpha Vantage** and **Yahoo Finance**,
 - A local **SQLite** database (via Peewee),
 - Multiple **trading strategies** (Break of Structure, Fair Value Gaps, Opening Range Breakout),
-- And several **LLM providers** (OpenAI GPT, Google Gemini, and a local LLM via Ollama) to rank stocks and analyze news.
+- And several **LLM providers** (local LLM via Ollama) to rank stocks and analyze news.
 
 ### Key Features
 
@@ -105,8 +105,6 @@ For example:
 - **Python** 3.10+ (recommended)
 - **pip** / **virtualenv** or similar
 - **Alpha Vantage API key**
-- (Optional) **OpenAI API key** for GPT-based ranking
-- (Optional) **Google Gemini API key**
 - (Optional) Local LLM via **Ollama** for deep analysis
 - Basic command-line familiarity
 
@@ -135,8 +133,6 @@ Set your configuration via environment variables or a `.env` file. Typical setti
 DATABASE_NAME=trading.db
 ALPHAVANTAGE_API_KEY=your_alpha_vantage_key
 
-OPENAI_API_KEY=your_openai_key          # optional
-GEMINI_API_KEY=your_gemini_key          # optional
 LOCAL_LLM_URL=http://localhost:11434    # optional, for Ollama/local LLM
 ```
 
@@ -590,9 +586,7 @@ AI Stock Ranking
 
   - Sends prompt to:
 
-- OpenAI GPT (prompt_ai.gpt),
-
-- Falls back to Google Gemini (prompt_ai.gemini) if needed.
+- Local LLM (prompt_ai.gpt),
 
   - Asks the model to output a comma-separated ranking from worst to best.
 
@@ -637,10 +631,6 @@ For a given symbol:
 The result is returned as JSON-like data and displayed in the News / Analysis panel.
 
 LLM Orchestration – prompt_ai.py
-
-- gpt(prompt: str) – OpenAI GPT (e.g. gpt-5-nano).
-
-- gemini(prompt: str) – Google Gemini (gemini-2.0-flash).
 
 - local_llm(prompt: str, system_prompt: str = None) – Local LLM via HTTP (Ollama).
 

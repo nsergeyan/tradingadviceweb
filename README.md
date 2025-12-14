@@ -122,6 +122,31 @@ python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r backend/requirements.txt
 ```
+## For local LLM
+
+Install docker desktop:
+
+https://www.docker.com/products/docker-desktop/
+
+
+Download our docker image through google drive (As size exceeds Brightspace limit):
+
+https://drive.google.com/drive/folders/19DXzP5-BxZGEbP1L8y72itaLqoYzqBmx?usp=sharing
+
+localLLM.tar
+
+In terminal run:
+```shell
+docker load -i localLLM.tar
+```
+Then before running the code, start the local LLM:
+This can be done in the GUI on docker, but this command will ensure the gpu is used
+```shell
+docker run --gpus all -p 11434:11434 localLLM
+```
+
+Once the code is done, the LLM can be turned off in the GUI.
+
 
 ---
 

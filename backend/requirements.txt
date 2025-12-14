@@ -1,26 +1,75 @@
-peewee == 3.18.2
-flask == 3.1.2
-python-dotenv == 1.1.1
-requests == 2.32.5
-pandas == 2.3.2
-statsmodels == 0.14.5
-scikit-learn == 1.7.2
-backtrader[plotting] == 1.9.78.123
-
-#stat group TODO
-#pip install dotenv
-
-#AI group TODO
-#pip install newspaper3k
-#pip install lxml_html_clean
-#pip install --upgrade openai
-#pip install pytest
-#pip install fastapi uvicorn ------> to run it type, uvicorn backend.main:app --reload. (for Narek /Users/nareksergeyan/tradingadviceweb2/.venv/bin/uvicorn backend.main:app --reload)
-#Interactive API docs(easy UI) http://127.0.0.1:8000/docs
-
-#Kaan found these installs missing
-#pip install yfinance (Kaan)
-#pip install openai (Kaan)
-#jinja2
-
-
+annotated-doc==0.0.4
+annotated-types==0.7.0
+anyio==4.11.0
+babel==2.17.0
+beautifulsoup4==4.14.2
+certifi==2025.11.12
+cffi==2.0.0
+charset-normalizer==3.4.4
+click==8.3.1
+courlan==1.3.2
+cssselect==1.3.0
+curl_cffi==0.13.0
+dateparser==1.2.2
+distro==1.9.0
+fastapi==0.121.2
+feedfinder2==0.0.4
+feedparser==6.0.12
+filelock==3.20.0
+frozendict==2.4.7
+h11==0.16.0
+htmldate==1.9.4
+httpcore==1.0.9
+httpx==0.28.1
+idna==3.11
+iniconfig==2.3.0
+jieba3k==0.35.1
+Jinja2==3.1.6
+jiter==0.12.0
+joblib==1.5.2
+jusText==3.0.2
+lxml==6.0.2
+lxml_html_clean==0.4.3
+MarkupSafe==3.0.3
+multitasking==0.0.12
+newspaper3k==0.2.8
+nltk==3.9.2
+numpy==2.3.4
+openai==2.8.0
+packaging==25.0
+pandas==2.3.3
+peewee==3.18.3
+pillow==12.0.0
+platformdirs==4.5.0
+pluggy==1.6.0
+protobuf==6.33.1
+pycparser==2.23
+pydantic==2.12.4
+pydantic_core==2.41.5
+Pygments==2.19.2
+pytest==9.0.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.1
+pytz==2025.2
+PyYAML==6.0.3
+regex==2025.11.3
+requests==2.32.5
+requests-file==3.0.1
+sgmllib3k==1.0.0
+six==1.17.0
+sniffio==1.3.1
+soupsieve==2.8
+starlette==0.49.3
+tinysegmenter==0.3
+tld==0.13.1
+tldextract==5.3.0
+tqdm==4.67.1
+trafilatura==2.0.0
+typing-inspection==0.4.2
+typing_extensions==4.15.0
+tzdata==2025.2
+tzlocal==5.3.1
+urllib3==2.5.0
+uvicorn==0.38.0
+websockets==15.0.1
+yfinance==0.2.66

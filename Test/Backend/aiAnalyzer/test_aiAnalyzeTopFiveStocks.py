@@ -1,6 +1,3 @@
-# Updated unit tests reflecting new deep_research.aiAnalyzeTopFiveStocks behavior
-# using local_llm instead of OpenAI/Gemini
-
 import pytest
 from unittest.mock import patch, MagicMock
 import pandas as pd

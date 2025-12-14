@@ -14,7 +14,6 @@
 
 - [Name](#name)
 - [Description](#description)
-- [Badges](#badges)
 - [Visuals](#visuals)
 - [Getting Started](#getting-started)
   - [Requirements](#requirements)
@@ -88,14 +87,6 @@ The app is built as a **FastAPI backend** with a **minimal HTML/JavaScript front
 
 ---
 
-## Badges(Not finished)
-
-- CI Status: -
-- Python Version: `3.10+`
-- Framework: `FastAPI`
-
----
-
 ## Visuals
 
 _Add screenshots or GIFs here when available._
@@ -157,7 +148,7 @@ From the backend directory (example):
 
 ```
 cd backend
-uvicorn main:app --reload
+uvicorn backend.main:app --reload
 ```
 
 This starts FastAPI at:
@@ -174,8 +165,9 @@ http://127.0.0.1:8000/
 
 Or open index.html directly in your browser and make sure the script’s BACKEND_URL matches:
 
-```js
-const BACKEND_URL = "http://127.0.0.1:8000";
+```shell
+cd frontend/templates
+python -m http.server
 ```
 
 ---
@@ -187,7 +179,7 @@ User Flow
 1. Start the backend
 
 ```sh
-uvicorn main:app --reload
+uvicorn backend.main:app --reload
 ```
 
 2. Open the frontend page (served at / or by opening index.html directly).

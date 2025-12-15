@@ -10,4 +10,4 @@ router = APIRouter()
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-#to run frontend: uvicorn backend.main:app --reload
+#to run frontend: run "python main.py" in tradingadviceweb2 directory

@@ -163,7 +163,19 @@ LOCAL_LLM_URL=http://localhost:11434    # optional, for Ollama/local LLM
 
 ---
 
-## Run the backend
+## Run Entire Product (except local LLM) (recommended)
+
+From the tradingadviceweb2 directory:
+```
+python main.py
+```
+This will automatically start the backend local host and open the website on the default browser.
+
+Below is the manual method of running the backend and then opening the frontend (website).
+
+---
+
+## Run the backend (Manual Method)
 
 From the backend directory (example):
 
@@ -178,7 +190,7 @@ http://127.0.0.1:8000
 
 ---
 
-## Open the Frontend
+## Open the Frontend (Manual Method)
 
 If you serve index.html via FastAPI (e.g. route /), open:
 

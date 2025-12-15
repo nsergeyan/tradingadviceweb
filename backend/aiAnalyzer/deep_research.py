@@ -173,7 +173,7 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
     except Exception:
         pass
 
-    # --------- Stage-2: dedupe + filter by lookback ----------NEW
+    # --------- Stage-2: dedupe + filter by lookback ---------
     min_ts = _epoch(look_from)
     filtered = []
     for title, publisher, link, ts in candidates:
@@ -186,7 +186,7 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
             seen_links.add(norm_link)
             filtered.append((title, publisher, norm_link, ts))
 
-    # --------- Stage-3: resolve + fetch content in parallel ----------NEW
+    # --------- Stage-3: resolve + fetch content in parallel ---------
     def _process_item(item):
         title, publisher, link, ts = item
         # resolve redirects
@@ -305,7 +305,7 @@ All sources for this stock: {', '.join(news_result['sources'])}
 """
         all_summaries.append(stock_prompt)
 
-    # Combine all 5 stock summaries into a single GPT prompt
+    # Combine all 5 stock summaries into a single  prompt
     combined_prompt = f"""
     Role: You are a clear, helpful financial guide explaining stock news to a beginner investor.
     Task: Summarize the news data below into a simple, easy-to-read report.

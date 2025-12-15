@@ -1,16 +1,11 @@
 import yfinance as yf
 import requests
-from openai import OpenAI
 import calendar
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse, urlencode, parse_qs, urlsplit, urlunsplit, quote_plus
 from newspaper import Article
 from backend.list_stocks import get_50_stocks
 from backend.aiAnalyzer import prompt_ai
-
-# Set your OpenAI API key
-# You can put your own api if you have a better one
-
 
 # --------------------- Validation ---------------------
 def is_valid_nasdaq(symbol):
@@ -32,13 +27,11 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    # -------- tuning knobs --------NEW
     MAX_PER_SOURCE = max_articles           # per-source cap
     MAX_WORKERS = 8                         # parallel fetchers
     FETCH_TIMEOUT = 8                       # seconds per HTTP
     HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-    # -------- caches (per run) --------NEW
     RESOLVE_CACHE = {}
     CONTENT_CACHE = {}
 

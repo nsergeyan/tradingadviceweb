@@ -5,3 +5,4 @@ backend/TradingAdvice.db
 backend/.env
 __pycache__
 .db
+DbForStockUpdate/

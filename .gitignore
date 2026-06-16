@@ -1,8 +1,8 @@
 .idea
-backend/TradingAdvice.db
 .venv
 .env
 backend/.env
 __pycache__
-.db
+*.db
+*.DS_Store
 DbForStockUpdate/

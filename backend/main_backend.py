@@ -1,10 +1,10 @@
-from starlette.responses import JSONResponse
-
-from frontend.views import router as views_router
-
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
+
+from frontend.views import router as views_router
 from backend.aiAnalyzer import deep_research
 from backend.database.database import get_db, db
 from backend.database.models import PriceData, MetaData
@@ -14,14 +14,9 @@ from backend.final_strat import final_strategy
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-
     db.connect()
-    db.create_tables([
-        MetaData,
-        PriceData,
-    ])
+    db.create_tables([MetaData, PriceData])
     db.close()
-
     yield
 
 app = FastAPI(
@@ -30,18 +25,15 @@ app = FastAPI(
     version="1.1",
     lifespan=lifespan
 )
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or restrict to ["http://localhost:63342"] in dev
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.include_router(views_router)
-
-analysis_cache = {}
 
 @app.get("/")
 def root():

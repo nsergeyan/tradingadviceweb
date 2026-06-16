@@ -26,7 +26,7 @@ def get_50_stocks() -> list:
 
         next(reader) #Skips header
 
-        valid_rows = [row for row in reader if row and len(row) > 1 and row[1].strip()] #removes whitespcases and empty records
+        valid_rows = [row for row in reader if row and len(row) > 1 and row[1].strip()]
         sorted_rows = sorted(list(valid_rows), key = lambda i : float(i[1]), reverse= True)
 
         return [item[0] for item in sorted_rows[:50]]
@@ -62,7 +62,7 @@ def update_stock_volume() -> None:
             if last_week.empty:
                 continue
 
-            #We grab the last full week ([-1]), sles it would return this week so far
+            # We grab [-1] to get the last full week, not the current partial week
             writer.writerow([symbol, last_week.iloc[-1]["Volume"]])
 
 

@@ -1,8 +1,8 @@
 """
-Main run script for the Nasdaq Navigator
+Main run script for Nasdaq Navigator.
 
 Usage:
-    "python main_backend.py" when in the tradingadviceweb2 directory
+    python main.py    (from the tradingadviceweb2 directory)
 """
 
 if __name__ == "__main__":

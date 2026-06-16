@@ -191,7 +191,7 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
         title, publisher, link, ts = item
         # resolve redirects
         final_link = _resolve_url(link)
-        # optional early skip for paywalls (ускоряет, если не нужен paywalled контент)
+        # optional: skip paywalled sources early to save fetch time
         # if _is_paywalled(final_link):
         #     return None
         # fetch content
@@ -233,20 +233,25 @@ def get_recent_news(symbol, max_articles=10, lookback_days=7, lang="en-US", regi
 
 
 def initial_stock_ranking() -> list:
-
+    """
+    Experimental: ranks the top 10 stocks by news sentiment using the local LLM.
+    Not currently wired to the API — available for future integration.
+    """
     stocks = get_50_stocks()[:10]
-    prompt = """You are the worlds best trading advisor. You are having a meeting soon, and need to do in initial assessment of 15 stocks that have been of interest.
-    Of those, you need rank them from worst to best (to invest in). You will be given some news on which to bace your assessment.  Return a simple list, with the stock symbols separated by a comma, and nothing else. The list starts with the worst, and ends with the best."""
-
+    prompt = (
+        "You are the world's best trading advisor. Rank the following stocks from worst to best "
+        "to invest in based on recent news. Return only a comma-separated list of symbols, "
+        "starting with the worst and ending with the best.\n"
+    )
 
     for stock in stocks:
         news_items = get_recent_news(stock, 3)["news"]
         news = "\n".join([f"{i + 1}. {n['title']} ({n['publisher']})" for i, n in enumerate(news_items)])
+        prompt += f"\n{stock}:\n{news}\n"
 
-        print(f"{stock} news loaded")
-        prompt += f"\n {stock}: \n {news}"
-
-    print("sending")
+    response = prompt_ai.local_llm(prompt)
+    ranked = [s.strip() for s in response.split(",") if s.strip()]
+    return ranked
 
 
 
@@ -277,21 +282,7 @@ def aiAnalyzeTopFiveStocks(stock: str):
             for i, n in enumerate(news_items)
         ])
 
-        # NEW Console output with reason for empty content
-        print("\nFull article content:\n")
-        for i, n in enumerate(news_items, 1):
-            print(f"[{i}] {n['title']}")
-            print(f"Publisher: {n.get('publisher', '')}")
-            print(f"URL: {n.get('link', '')}")
-            if not n.get("content"):
-                note = " (paywalled)" if n.get("paywalled") else " (no content extracted)"
-                print(f"[!] Empty content{note}\n")
-            else:
-                print()
-                print(n.get('content', '')[:5000])  # shows up to 5000 symbols
-            print("\n" + "-" * 120 + "\n")
-
-        # Build per-stock summary for GPT
+        # Build per-stock summary for LLM
         stock_prompt = f"""
 Stock: {symbol}
 
@@ -305,7 +296,7 @@ All sources for this stock: {', '.join(news_result['sources'])}
 """
         all_summaries.append(stock_prompt)
 
-    # Combine all 5 stock summaries into a single  prompt
+    # Combine stock summaries into a single prompt
     combined_prompt = f"""
     Role: You are a clear, helpful financial guide explaining stock news to a beginner investor.
     Task: Summarize the news data below into a simple, easy-to-read report.

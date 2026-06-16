@@ -9,7 +9,7 @@ def final_strategy(cash, symbol):
     # BOS strat
     bos_price, bos_risk, bos_gains, bos_signal = bos_strat(cash, symbol)
 
-    # FVG stra
+    # FVG strat
     df_weekly = fetch_ohlcv(symbol, "Weekly", limit=10)
     fvg_price, fvg_risk, fvg_gains = fair_value_gaps_strategy(df_weekly)
 
@@ -33,14 +33,6 @@ def final_strategy(cash, symbol):
         decision = "DO NOT BUY"
         risk_comment = "High risk / refrain from investing"
 
-    # Print result
-    # print(f"Symbol: {symbol}")
-    # print(f"Decision: {decision}")
-    # print(f"Risk score: {risk:.2f} ({risk_comment})")
-    # print(f"Estimated gains: {gains:.2f}")
-    # print(f"BOS signal: {bos_signal}")
-    # print(f"FVG signal price: {fvg_price}")
-    # print(f"ORB signal price: {orb_price}")
     return {
         "decision": decision,
         "avg_risk": round(risk, 2),
@@ -53,5 +45,3 @@ def final_strategy(cash, symbol):
 
 if __name__ == "__main__":
     final_strategy(1000, "AAPL")
-
-# to run: use "python -m backend.final_strat" from tradingadviceweb2, do not run from inside backend!

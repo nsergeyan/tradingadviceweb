@@ -123,7 +123,7 @@ Browser → GET /analyze/top5/{index}
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/tradingadviceweb2.git
+git clone https://github.com/YOUR_USERNAME/tradingadviceweb.git
 cd tradingadviceweb2
 
 # Create and activate a virtual environment

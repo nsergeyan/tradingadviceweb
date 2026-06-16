@@ -305,11 +305,11 @@ Built as a group project at Leiden University (2024/2025) — Group 27.
 
 | Name | Contribution |
 |---|---|
-| Narek Sergeyan | FastAPI backend (`main_backend.py`), AI research engine (`deep_research.py`, `prompt_ai.py`), system integration |
+| Narek Sergeyan | FastAPI backend (`main_backend.py`), AI research engine (`deep_research.py`, `prompt_ai.py`), system integration, rontend UI/UX |
 | Artem Litovenko | FastAPI backend (`main_backend.py`), AI research engine, data pipeline |
-| Alexander Djurrema | Stock universe selector (`list_stocks.py`), AI research engine |
+| Alexander Djurrema | Stock universe selector (`list_stocks.py`)|
 | Jingshan Yuan | Database layer (`database/`), Fair Value Gaps strategy (`fair_value_gaps_strategy.py`) |
-| Kaan Uysal | Break of Structure strategy (`bos_strat.py`), frontend UI/UX |
-| Alejandro Lopez | Opening Range Breakout strategy (`orb_strategy.py`), frontend UI/UX |
+| Kaan Uysal | Break of Structure strategy (`bos_strat.py`) |
+| Alejandro Lopez | Opening Range Breakout strategy (`orb_strategy.py`)|
 
 > This project is not financial advice.

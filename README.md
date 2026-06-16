@@ -22,6 +22,14 @@
 
 ---
 
+## Demo
+
+[![Demo Video](https://img.youtube.com/vi/X5sK50jIdfg/0.jpg)](https://www.youtube.com/watch?v=X5sK50jIdfg)
+
+> Click the thumbnail to watch the demo.
+
+---
+
 ## Overview
 
 Trading Buddy scans the S&P 500, identifies the 50 most liquid stocks by weekly volume, runs three independent quantitative strategies on the top 5, and aggregates them into a single trading signal per stock. Clicking any symbol opens an AI-generated research panel that fetches recent news and produces a plain-English analysis using a locally hosted LLM via Ollama.
